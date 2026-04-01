@@ -154,12 +154,6 @@ section {
     margin-left: var(--spacing-md);
 }
 
-.tree-node__warning {
-    color: #f59e0b;
-    font-size: 0.85em;
-    margin-left: var(--spacing-sm);
-}
-
 .tree-node__pattern-warning {
     color: #f59e0b;
     font-size: 0.85em;

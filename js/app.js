@@ -223,6 +223,9 @@ class IDS2PSETApp {
         container.innerHTML = '';
 
         for (const [name, pset] of Object.entries(this.psets)) {
+            // PSet с regex не отображаются в списке
+            if (pset.is_pattern) continue;
+
             const node = document.createElement('div');
             node.className = 'tree-node';
 
@@ -238,7 +241,6 @@ class IDS2PSETApp {
                            data-pset="${name}">
                     <label for="pset-${name}">
                         📦 ${name} (${this.formatEntities(pset.applicable_entities)})
-                        ${pset.is_pattern ? '<span class="tree-node__warning">⚠️ PSet с regex</span>' : ''}
                     </label>
                 </div>
                 ${patternCount > 0 ? `<div class="tree-node__pattern-warning">⚠️ ${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
