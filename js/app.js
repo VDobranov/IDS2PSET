@@ -179,6 +179,7 @@ class IDS2PSETApp {
 
                 if (Object.keys(this.psets).length === 0) {
                     document.getElementById('preview-section').classList.add('hidden');
+                    document.getElementById('result-section').classList.add('hidden');
                 }
             });
         });
@@ -318,6 +319,9 @@ class IDS2PSETApp {
         `;
         fileInfo.textContent = `📄 Файл: ${fileName}`;
 
+        // Сохраняем имя файла для скачивания
+        this.outputFileName = fileName;
+
         document.getElementById('result-section').classList.remove('hidden');
     }
 
@@ -342,7 +346,7 @@ class IDS2PSETApp {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'IDS2PSET_Library.ifc';
+        a.download = this.outputFileName || 'IDS2PSET_Library.ifc';
         a.click();
         URL.revokeObjectURL(url);
 
