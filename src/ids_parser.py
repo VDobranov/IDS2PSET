@@ -26,53 +26,72 @@ class PSetGroup:
     applicable_entities: List[str] = field(default_factory=list)
 
 
-def _extract_value_or_pattern(elem, ns, xs_ns):
-    """Extract simpleValue or regex pattern from element."""
+def _extract_values(elem, ns, xs_ns):
+    """Extract all values from simpleValue or xs:restriction with xs:enumeration."""
     if elem is None:
-        return None
+        return []
+
+    values = []
 
     # Try simpleValue first
     simple_value = elem.find("ids:simpleValue", ns)
     if simple_value is not None and simple_value.text:
-        return simple_value.text
+        return [simple_value.text]
 
-    # Try xs:restriction with xs:pattern
+    # Try xs:restriction with xs:enumeration
     restriction = elem.find("xs:restriction", xs_ns)
     if restriction is not None:
-        pattern = restriction.find("xs:pattern", xs_ns)
-        if pattern is not None:
-            pattern_value = pattern.get("value")
-            if pattern_value:
-                # Return pattern as value (e.g., ".*[КкKk][СсCc][ИиIi].*")
-                return pattern_value
+        enumerations = restriction.findall("xs:enumeration", xs_ns)
+        for enum in enumerations:
+            enum_val = enum.get("value")
+            if enum_val:
+                values.append(enum_val)
 
-    return None
+        # Also try xs:pattern if no enumerations
+        if not values:
+            pattern = restriction.find("xs:pattern", xs_ns)
+            if pattern is not None:
+                pattern_value = pattern.get("value")
+                if pattern_value:
+                    values.append(pattern_value)
+
+    return values
 
 
 def _extract_entity_with_type(entity_elem, ns, xs_ns):
-    """Extract entity name with optional predefined type."""
+    """Extract entity name with optional predefined type.
+
+    Returns list of all combinations of entity name and predefined type.
+    For example, if entity has 2 names and 2 predefined types, returns 4 combinations.
+    """
     if entity_elem is None:
-        return None
+        return []
 
-    # Get entity name
+    # Get entity names (can be multiple via enumeration)
     name_elem = entity_elem.find("ids:name", ns)
-    entity_name = None
+    entity_names = []
     if name_elem is not None:
-        entity_name = _extract_value_or_pattern(name_elem, ns, xs_ns)
+        entity_names = _extract_values(name_elem, ns, xs_ns)
 
-    # Get predefined type
+    # Get predefined types (can be multiple via enumeration)
     predefined_type_elem = entity_elem.find("ids:predefinedType", ns)
-    predefined_type = None
+    predefined_types = []
     if predefined_type_elem is not None:
-        predefined_type = _extract_value_or_pattern(predefined_type_elem, ns, xs_ns)
+        predefined_types = _extract_values(predefined_type_elem, ns, xs_ns)
 
-    # Combine entity name with predefined type
-    if entity_name:
-        if predefined_type:
-            return f"{entity_name}/{predefined_type}"
-        return entity_name
+    # Generate all combinations
+    result = []
+    if entity_names:
+        if predefined_types:
+            # All combinations of entity name + predefined type
+            for name in entity_names:
+                for ptype in predefined_types:
+                    result.append(f"{name}/{ptype}")
+        else:
+            # Just entity names without predefined type
+            result = entity_names
 
-    return None
+    return result
 
 
 def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
@@ -106,9 +125,8 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
         if applicability is not None:
             entity_elem = applicability.find("ids:entity", ns)
             if entity_elem is not None:
-                entity_value = _extract_entity_with_type(entity_elem, ns, xs_ns)
-                if entity_value:
-                    entities.append(entity_value)
+                entity_values = _extract_entity_with_type(entity_elem, ns, xs_ns)
+                entities.extend(entity_values)  # Add all combinations
 
         # Get requirements
         requirements = spec.find("ids:requirements", ns)
@@ -121,18 +139,22 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             if prop_set_elem is None:
                 continue
 
-            pset_name = _extract_value_or_pattern(prop_set_elem, ns, xs_ns)
+            pset_name = _extract_values(prop_set_elem, ns, xs_ns)
             if not pset_name:
                 continue
+
+            pset_name = pset_name[0]  # Use first value
 
             # Extract base name
             base_name_elem = prop.find("ids:baseName", ns)
             if base_name_elem is None:
                 continue
 
-            base_name = _extract_value_or_pattern(base_name_elem, ns, xs_ns)
-            if not base_name:
+            base_name_list = _extract_values(base_name_elem, ns, xs_ns)
+            if not base_name_list:
                 continue
+
+            base_name = base_name_list[0]  # Use first value
 
             # Get attributes
             data_type = prop.get("dataType", "IFCTEXT")
