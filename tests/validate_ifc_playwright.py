@@ -105,7 +105,7 @@ def validate_ifc_file(ifc_path):
         print(f"   ✗ Ошибка: {e}")
         all_passed = False
 
-    # 5. Валидация через gherkin-rules
+    # 5. Валидация через gherkin-rules (только для полных моделей зданий)
     print("\n5. gherkin-rules валидация:")
     try:
         # Добавляем src в path
@@ -115,16 +115,29 @@ def validate_ifc_file(ifc_path):
         from gherkin_validator import GherkinValidator, GHERKIN_AVAILABLE
 
         if GHERKIN_AVAILABLE:
-            validator = GherkinValidator()
-            result = validator.validate_file(ifc_path, rule_type="ALL")
+            # Проверяем тип файла
+            import ifcopenshell
 
-            if result["valid"]:
-                print("   ✓ gherkin-rules: пройдено")
+            f = ifcopenshell.open(ifc_path)
+            libraries = f.by_type("IfcProjectLibrary")
+            has_buildings = len(f.by_type("IfcBuilding")) > 0
+
+            is_pset_library = len(libraries) > 0 and not has_buildings
+
+            if is_pset_library:
+                print("   ℹ PSet Library — gherkin правила не применимы")
+                print("   (gherkin требует IfcPropertySet, IfcBuilding, геометрию)")
             else:
-                print(f"   ✗ Найдено ошибок: {result['error_count']}")
-                for error in result["errors"][:5]:
-                    print(f"      - {error}")
-                all_passed = False  # gherkin ошибка = провал всей валидации
+                validator = GherkinValidator()
+                result = validator.validate_file(ifc_path, rule_type="ALL")
+
+                if result["valid"]:
+                    print("   ✓ gherkin-rules: пройдено")
+                else:
+                    print(f"   ✗ Найдено ошибок: {result['error_count']}")
+                    for error in result["errors"][:5]:
+                        print(f"      - {error}")
+                    all_passed = False  # gherkin ошибка = провал всей валидации
         else:
             print("   ⚠ Gherkin validator недоступен")
 

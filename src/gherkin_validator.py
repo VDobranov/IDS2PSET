@@ -101,10 +101,36 @@ class GherkinValidator:
         self.errors = []
         self.warnings = []
 
+        # Определяем тип IFC файла для выбора правил
+        try:
+            import ifcopenshell
+
+            f = ifcopenshell.open(file_path)
+
+            # Проверяем это ли PSet Library
+            libraries = f.by_type("IfcProjectLibrary")
+            has_buildings = len(f.by_type("IfcBuilding")) > 0
+            has_geometry = len(f.by_type("IfcShapeRepresentation")) > 0
+
+            is_pset_library = (
+                len(libraries) > 0 and not has_buildings and not has_geometry
+            )
+
+            # Для PSet Library используем только PSE правила
+            if is_pset_library:
+                rule_type = "PSE"
+        except Exception:
+            pass  # Если не смогли определить, используем заданный rule_type
+
+        # Для PSet Library запускаем только PSE feature файлы
+        if rule_type == "PSE":
+            return self._validate_pse_only(file_path, max_outcomes)
+
         # Map rule type string to RuleType
+        # PSE rules have @implementer-agreement tag
         rule_type_map = {
             "ALL": RuleType.ALL if RuleType else None,
-            "PSE": RuleType.INDUSTRY_PRACTICE if RuleType else None,
+            "PSE": RuleType.IMPLEMENTER_AGREEMENT if RuleType else None,
             "IFC": RuleType.IMPLEMENTER_AGREEMENT if RuleType else None,
             "CRITICAL": RuleType.CRITICAL if RuleType else None,
         }
@@ -164,6 +190,137 @@ class GherkinValidator:
             "warning_count": len(self.warnings),
             "results": self.results,
         }
+
+    def _validate_pse_only(self, file_path: str, max_outcomes: int) -> Dict[str, Any]:
+        """Validate PSet Library using only PSE rules."""
+        import subprocess
+        import tempfile
+        import os
+        import json
+        import base64
+
+        # Находим путь к ifc-gherkin-rules
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        vendor_path = None
+
+        # Ищем vendor относительно текущего файла или корня проекта
+        for base in [
+            os.path.join(cwd, "..", "vendor"),
+            os.path.join(cwd, "..", "..", "vendor"),
+            "vendor",
+        ]:
+            candidate = os.path.abspath(os.path.join(base, "ifc-gherkin-rules"))
+            if os.path.exists(candidate):
+                vendor_path = candidate
+                break
+
+        if not vendor_path:
+            self.errors.append("ifc-gherkin-rules not found")
+            return {
+                "valid": False,
+                "errors": self.errors,
+                "warnings": self.warnings,
+                "error_count": len(self.errors),
+                "warning_count": len(self.warnings),
+                "results": {},
+            }
+
+        fd, jsonfn = tempfile.mkstemp("pse.json")
+
+        try:
+            # Запускаем behave только с PSE правилами (по тегу @PSE)
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "behave",
+                    "--tags",
+                    "@PSE",  # Только PSE правила по тегу
+                    "--tags=-disabled",
+                    "--define",
+                    f"input={os.path.abspath(file_path)}",
+                    "--define",
+                    f"max_outcomes_per_rule={max_outcomes}",
+                    "--define",
+                    "execution_mode=ExecutionMode.TESTING",
+                    "-f",
+                    "outcome_embedding_json",
+                    "-o",
+                    jsonfn,
+                ],
+                cwd=vendor_path,
+                capture_output=True,
+            )
+
+            # Читаем результаты
+            with open(jsonfn) as f:
+                log = json.load(f)
+
+            # Парсим outcomes
+            for item in log:
+                for el in item.get("elements", []):
+                    # Protocol errors
+                    for key in ["protocol_errors", "caught_exceptions"]:
+                        data = self._decode_and_load_data(el, key)
+                        if data:
+                            if key == "protocol_errors":
+                                for error in data:
+                                    self.errors.append(f"Protocol error: {error}")
+                            else:
+                                for exc in data:
+                                    exc_type = exc.get("type", "Unknown")
+                                    exc_msg = exc.get("message", str(exc))
+                                    self.errors.append(
+                                        f"Exception: {exc_type}: {exc_msg}"
+                                    )
+
+                    # Validation outcomes
+                    validation_outcomes = (
+                        json.loads(
+                            base64.b64decode(
+                                el.get("validation_outcomes", [{}])[0].get("data", "")
+                            ).decode("utf-8")
+                        )
+                        if el.get("validation_outcomes")
+                        else []
+                    )
+                    for outcome in validation_outcomes:
+                        severity = outcome.get("severity", "warning")
+                        message = outcome.get("message", str(outcome))
+                        if severity == "error":
+                            self.errors.append(message)
+                        elif severity == "warning":
+                            self.warnings.append(message)
+
+        except Exception as e:
+            self.errors.append(f"PSE validation error: {str(e)}")
+        finally:
+            os.close(fd)
+            os.unlink(jsonfn)
+
+        return {
+            "valid": len(self.errors) == 0,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "error_count": len(self.errors),
+            "warning_count": len(self.warnings),
+            "results": {},
+        }
+
+    def _decode_and_load_data(self, element, key):
+        """Decode base64 encoded data and load it as json"""
+        import json
+        import base64
+
+        return (
+            json.loads(
+                base64.b64decode(element.get(key, [{}])[0].get("data", "")).decode(
+                    "utf-8"
+                )
+            )
+            if element.get(key)
+            else []
+        )
 
     def validate_string(
         self, ifc_content: str, rule_type: str = "ALL"
