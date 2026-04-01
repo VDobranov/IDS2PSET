@@ -87,7 +87,6 @@ class IDS2PSETApp {
 
             this.log(`📁 Загрузка: ${file.name}`);
             this.files.set(file.name, file);
-            this.renderFilesList();
 
             // Парсинг IDS
             try {
@@ -98,6 +97,9 @@ class IDS2PSETApp {
             } catch (error) {
                 this.log(`✗ Ошибка парсинга ${file.name}: ${error.message}`);
             }
+
+            // Рендер после парсинга
+            this.renderFilesList();
         }
 
         if (Object.keys(this.psets).length > 0) {

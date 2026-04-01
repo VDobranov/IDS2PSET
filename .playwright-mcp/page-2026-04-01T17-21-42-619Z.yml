@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "IDS2PSET" [level=1] [ref=e3]
+    - paragraph [ref=e4]: Генератор библиотек свойств на основе IDS
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e8] [cursor=pointer]:
+        - img [ref=e9]
+        - paragraph [ref=e11]: Перетащите IDS-файлы сюда
+        - paragraph [ref=e12]: или кликните для выбора
+      - generic [ref=e16]:
+        - generic [ref=e17]: ✓ IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_КР_v3.2.ids
+        - button "×" [ref=e18] [cursor=pointer]
+    - generic [ref=e19]:
+      - heading "Найденные шаблоны свойств" [level=2] [ref=e20]
+      - button "Сгенерировать IFC" [ref=e22] [cursor=pointer]
+  - contentinfo [ref=e13]:
+    - paragraph [ref=e14]: IDS2PSET — бессерверное веб-приложение для генерации IFC библиотек
