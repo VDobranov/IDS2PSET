@@ -1,0 +1,3 @@
+[submodule "vendor/ifc-gherkin-rules"]
+	path = vendor/ifc-gherkin-rules
+	url = https://github.com/VDobranov/ifc-gherkin-rules.git
