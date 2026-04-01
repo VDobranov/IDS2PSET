@@ -19,7 +19,9 @@
 | `ApplicableEntity` | все entity из требований PSet |
 | `HasPropertyTemplates` | список свойств PSet |
 
-**Ссылки**: [IFC4 — IfcPropertySetTemplate](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/lexical/IfcPropertySetTemplate.htm)
+**Ссылки**: 
+- [IFC4 — IfcPropertySetTemplate](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/lexical/IfcPropertySetTemplate.htm)
+- [[13_references](13_references.md) — Справочные материалы
 
 ---
 
