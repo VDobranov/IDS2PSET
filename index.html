@@ -11,7 +11,7 @@
         <h1>IDS2PSET</h1>
         <p>Генератор библиотек свойств на основе IDS</p>
     </header>
-    
+
     <main>
         <!-- Drop zone for IDS files -->
         <section id="upload-section">
@@ -25,20 +25,38 @@
                 </div>
                 <input type="file" id="file-input" accept=".ids" multiple hidden>
             </div>
-            
+
             <!-- Uploaded files list -->
             <div id="files-list" class="files-list"></div>
         </section>
-        
+
         <!-- PSet Preview Section -->
         <section id="preview-section" class="hidden">
             <h2>Найденные шаблоны свойств</h2>
-            <div id="pset-tree" class="pset-tree"></div>
+            <div class="pset-container">
+                <div id="pset-tree" class="pset-tree"></div>
+                <div id="pset-details" class="pset-details hidden">
+                    <h3>Информация о PSet</h3>
+                    <div class="details-grid">
+                        <div class="details-label">Name</div>
+                        <div class="details-value" id="details-name"></div>
+
+                        <div class="details-label">Description</div>
+                        <div class="details-value" id="details-description"></div>
+
+                        <div class="details-label">TemplateType</div>
+                        <div class="details-value" id="details-type"></div>
+
+                        <div class="details-label">ApplicableEntity</div>
+                        <div class="details-value" id="details-entity"></div>
+                    </div>
+                </div>
+            </div>
             <div class="actions">
                 <button id="generate-btn" class="btn btn-primary">Сгенерировать IFC</button>
             </div>
         </section>
-        
+
         <!-- Progress Section -->
         <section id="progress-section" class="hidden">
             <div class="progress-bar">
@@ -46,7 +64,7 @@
             </div>
             <p id="progress-text">Обработка...</p>
         </section>
-        
+
         <!-- Result Section -->
         <section id="result-section" class="hidden">
             <div class="result success">
@@ -59,18 +77,18 @@
                 </div>
             </div>
         </section>
-        
+
         <!-- Log Panel -->
         <section id="log-section" class="hidden">
             <h2>Лог процесса</h2>
             <pre id="log-content" class="log-content"></pre>
         </section>
     </main>
-    
+
     <footer>
         <p>IDS2PSET — бессерверное веб-приложение для генерации IFC библиотек</p>
     </footer>
-    
+
     <script src="js/pyodide-bridge.js"></script>
     <script src="js/app.js"></script>
 </body>
