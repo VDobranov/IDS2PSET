@@ -51,20 +51,14 @@ class PyodideBridge {
         await this.pyodide.loadPackage('micropip');
         const micropip = this.pyodide.pyimport('micropip');
 
-        // Установка ifcopenshell из локального wheel (только если нужен)
+        // Установка ifcopenshell из GitHub (только если нужен)
         if (needIFCOpenShell && !this.ifcOpenshellLoaded) {
             try {
-                const wheelResponse = await fetch('./wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl');
-                const wheelBlob = await wheelResponse.blob();
-                const wheelArrayBuffer = await wheelBlob.arrayBuffer();
-                const wheelData = new Uint8Array(wheelArrayBuffer);
+                // Используем прямую ссылку на GitHub raw content
+                const wheelUrl = 'https://github.com/VDobranov/IDS2PSET/raw/refs/heads/main/wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
 
-                // Запись wheel в файловую систему Pyodide
-                const wheelPath = '/tmp/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
-                this.pyodide.FS.writeFile(wheelPath, wheelData);
-
-                // Установка через micropip с абсолютным путём
-                await micropip.install('file:' + wheelPath);
+                // Установка через micropip с URL
+                await micropip.install(wheelUrl);
                 this.ifcOpenshellLoaded = true;
             } catch (e) {
                 console.error('Ошибка установки ifcopenshell:', e);
