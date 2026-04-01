@@ -118,6 +118,12 @@ section {
     color: #ef4444;
 }
 
+.file-item__warning {
+    font-size: 0.85em;
+    color: #f59e0b;
+    margin-top: 2px;
+}
+
 /* PSet Tree */
 .pset-tree {
     margin: var(--spacing-md) 0;
@@ -146,6 +152,21 @@ section {
 
 .tree-node__children {
     margin-left: var(--spacing-md);
+}
+
+.tree-node__warning {
+    color: #f59e0b;
+    font-size: 0.85em;
+    margin-left: var(--spacing-sm);
+}
+
+.tree-node__pattern-warning {
+    color: #f59e0b;
+    font-size: 0.85em;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid #f59e0b;
+    margin: var(--spacing-xs) 0;
 }
 
 .property-item {

@@ -145,9 +145,22 @@ class IDS2PSETApp {
         for (const [name, file] of this.files) {
             const item = document.createElement('div');
             item.className = 'file-item';
+
+            // Подсчитываем PSet и свойства с regex patterns для этого файла
+            let patternPSetCount = 0;
+            let patternPropCount = 0;
+            for (const [psetName, pset] of Object.entries(this.psets)) {
+                if (pset.source === name) {
+                    if (pset.is_pattern) patternPSetCount++;
+                    patternPropCount += pset.properties.filter(p => p.is_pattern).length;
+                }
+            }
+
             item.innerHTML = `
                 <span class="file-item__name">✓ ${name}</span>
                 <button class="file-item__remove" data-file="${name}">×</button>
+                ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
+                ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
             `;
             container.appendChild(item);
         }
@@ -212,6 +225,11 @@ class IDS2PSETApp {
         for (const [name, pset] of Object.entries(this.psets)) {
             const node = document.createElement('div');
             node.className = 'tree-node';
+
+            // Подсчитываем свойства с regex
+            const patternProps = pset.properties.filter(p => p.is_pattern);
+            const patternCount = patternProps.length;
+
             node.innerHTML = `
                 <div class="tree-node__header">
                     <input type="checkbox"
@@ -220,10 +238,12 @@ class IDS2PSETApp {
                            data-pset="${name}">
                     <label for="pset-${name}">
                         📦 ${name} (${this.formatEntities(pset.applicable_entities)})
+                        ${pset.is_pattern ? '<span class="tree-node__warning">⚠️ PSet с regex</span>' : ''}
                     </label>
                 </div>
+                ${patternCount > 0 ? `<div class="tree-node__pattern-warning">⚠️ ${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
-                    ${pset.properties.map(prop => {
+                    ${pset.properties.filter(prop => !prop.is_pattern).map(prop => {
                         const measureType = prop.data_type || 'IfcText';
                         const templateType = prop.template_type || 'P_SINGLEVALUE';
                         return `

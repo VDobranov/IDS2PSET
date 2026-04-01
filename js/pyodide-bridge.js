@@ -124,11 +124,13 @@ class PyodideBridge {
                             'data_type': p.data_type,
                             'cardinality': p.cardinality,
                             'description': p.description,
-                            'enum_values': p.enum_values
+                            'enum_values': p.enum_values,
+                            'is_pattern': p.is_pattern
                         }
                         for p in pset.properties
                     ],
-                    'applicable_entities': pset.applicable_entities
+                    'applicable_entities': pset.applicable_entities,
+                    'is_pattern': pset.is_pattern
                 }
 
             json.dumps(result)
