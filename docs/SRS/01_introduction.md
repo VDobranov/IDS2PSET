@@ -38,6 +38,7 @@
 - [[10a_tdd](10a_tdd.md) — TDD и валидация
 - [[11_implementation_plan](11_implementation_plan.md) — План реализации (этапы 1-6)
 - [[11a_validation_plan](11a_validation_plan.md) — План реализации (этапы 6b-8)
+- [[12_precommit_ci](12_precommit_ci.md) — Pre-commit хуки и CI/CD
 
 ---
-*Версия: 0.4 | Статус: Черновик*
+*Версия: 0.5 | Статус: Черновик*

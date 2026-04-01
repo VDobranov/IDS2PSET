@@ -11,6 +11,10 @@ source .venv/bin/activate  # macOS/Linux
 
 # Установка зависимостей
 pip install -r requirements.txt
+
+# Установка pre-commit хуков
+pip install pre-commit
+pre-commit install
 ```
 
 ## Запуск тестов
