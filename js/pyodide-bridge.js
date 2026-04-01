@@ -7,6 +7,7 @@ class PyodideBridge {
         this.pyodide = null;
         this.initialized = false;
         this.pythonModulesLoaded = false;
+        this.ifcOpenshellLoaded = false;
     }
 
     /**
@@ -37,11 +38,12 @@ class PyodideBridge {
 
     /**
      * Загрузка Python модулей из src/ и wheels/
+     * @param {boolean} needIFCOpenShell - Загружать ли ifcopenshell
      */
-    async loadModules() {
+    async loadModules(needIFCOpenShell = true) {
         await this.init();
 
-        if (this.pythonModulesLoaded) {
+        if (this.pythonModulesLoaded && (!needIFCOpenShell || this.ifcOpenshellLoaded)) {
             return true;
         }
 
@@ -49,39 +51,45 @@ class PyodideBridge {
         await this.pyodide.loadPackage('micropip');
         const micropip = this.pyodide.pyimport('micropip');
 
-        // Установка ifcopenshell из локального wheel
-        try {
-            const wheelResponse = await fetch('./wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl');
-            const wheelBlob = await wheelResponse.blob();
-            const wheelArrayBuffer = await wheelBlob.arrayBuffer();
+        // Установка ifcopenshell из локального wheel (только если нужен)
+        if (needIFCOpenShell && !this.ifcOpenshellLoaded) {
+            try {
+                const wheelResponse = await fetch('./wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl');
+                const wheelBlob = await wheelResponse.blob();
+                const wheelArrayBuffer = await wheelBlob.arrayBuffer();
 
-            // Запись wheel в файловую систему Pyodide
-            this.pyodide.FS.writeFile('/tmp/ifcopenshell.whl', new Uint8Array(wheelArrayBuffer));
-            await micropip.install('/tmp/ifcopenshell.whl');
-        } catch (e) {
-            console.error('Ошибка установки ifcopenshell:', e);
-            throw new Error('ifcopenshell недоступен: ' + e.message);
+                // Запись wheel в файловую систему Pyodide
+                this.pyodide.FS.writeFile('/tmp/ifcopenshell.whl', new Uint8Array(wheelArrayBuffer));
+                await micropip.install('/tmp/ifcopenshell.whl');
+                this.ifcOpenshellLoaded = true;
+            } catch (e) {
+                console.error('Ошибка установки ifcopenshell:', e);
+                throw new Error('ifcopenshell недоступен: ' + e.message);
+            }
         }
 
-        // Копирование локальных модулей в файловую систему Pyodide
-        this.pyodide.FS.mkdir('/src');
+        // Копирование локальных модулей в файловую систему Pyodide (только один раз)
+        if (!this.pythonModulesLoaded) {
+            this.pyodide.FS.mkdir('/src');
 
-        // Загрузка ids_parser.py
-        const idsParserResponse = await fetch('./src/ids_parser.py');
-        const idsParserContent = await idsParserResponse.text();
-        this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
+            // Загрузка ids_parser.py
+            const idsParserResponse = await fetch('./src/ids_parser.py');
+            const idsParserContent = await idsParserResponse.text();
+            this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
 
-        // Загрузка pset_generator.py
-        const psetGeneratorResponse = await fetch('./src/pset_generator.py');
-        const psetGeneratorContent = await psetGeneratorResponse.text();
-        this.pyodide.FS.writeFile('/src/pset_generator.py', psetGeneratorContent);
+            // Загрузка pset_generator.py
+            const psetGeneratorResponse = await fetch('./src/pset_generator.py');
+            const psetGeneratorContent = await psetGeneratorResponse.text();
+            this.pyodide.FS.writeFile('/src/pset_generator.py', psetGeneratorContent);
 
-        // Загрузка validator.py
-        const validatorResponse = await fetch('./src/validator.py');
-        const validatorContent = await validatorResponse.text();
-        this.pyodide.FS.writeFile('/src/validator.py', validatorContent);
+            // Загрузка validator.py
+            const validatorResponse = await fetch('./src/validator.py');
+            const validatorContent = await validatorResponse.text();
+            this.pyodide.FS.writeFile('/src/validator.py', validatorContent);
 
-        this.pythonModulesLoaded = true;
+            this.pythonModulesLoaded = true;
+        }
+
         return true;
     }
 
@@ -91,7 +99,8 @@ class PyodideBridge {
      * @returns {Promise<Object>} - Распарсенные данные PSet
      */
     async parseIDS(content) {
-        await this.loadModules();
+        // Загружаем только Python модули, без ifcopenshell
+        await this.loadModules(false);
 
         // Передача контента в Python
         this.pyodide.FS.writeFile('/tmp/input.ids', content);
@@ -137,7 +146,8 @@ class PyodideBridge {
      * @returns {Promise<string>} - Содержимое IFC файла
      */
     async generateIFC(psets, selectedPSetNames) {
-        await this.loadModules();
+        // Загружаем модули с ifcopenshell
+        await this.loadModules(true);
 
         // Фильтрация выбранных PSet
         const filteredPSetNames = selectedPSetNames || Object.keys(psets);
@@ -179,7 +189,8 @@ class PyodideBridge {
      * @returns {Promise<Object>} - Результат валидации
      */
     async validateIFC(ifcContent) {
-        await this.loadModules();
+        // Загружаем модули с ifcopenshell для валидации
+        await this.loadModules(true);
 
         // Запись IFC в файл
         this.pyodide.FS.writeFile('/tmp/output.ifc', ifcContent);
