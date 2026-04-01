@@ -102,9 +102,15 @@ class IDS2PSETApp {
             this.renderFilesList();
         }
 
-        if (Object.keys(this.psets).length > 0) {
+        // Проверяем есть ли PSet без regex
+        const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+
+        if (hasValidPSets) {
             this.renderPSetTree();
             document.getElementById('preview-section').classList.remove('hidden');
+        } else {
+            // Если все PSet с regex, скрываем preview-section
+            document.getElementById('preview-section').classList.add('hidden');
         }
     }
 
@@ -159,10 +165,14 @@ class IDS2PSETApp {
             }
 
             item.innerHTML = `
-                <span class="file-item__name">✓ ${name}</span>
-                <button class="file-item__remove" data-file="${name}">×</button>
-                ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
-                ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
+                <div class="file-item__content">
+                    <div class="file-item__header">
+                        <span class="file-item__name">✓ ${name}</span>
+                        <button class="file-item__remove" data-file="${name}">×</button>
+                    </div>
+                    ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
+                    ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
+                </div>
             `;
             container.appendChild(item);
         }
@@ -192,7 +202,10 @@ class IDS2PSETApp {
                 this.renderFilesList();
                 this.renderPSetTree();
 
-                if (Object.keys(this.psets).length === 0) {
+                // Проверяем есть ли PSet без regex
+                const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+
+                if (!hasValidPSets) {
                     document.getElementById('preview-section').classList.add('hidden');
                     document.getElementById('result-section').classList.add('hidden');
                 }
@@ -224,9 +237,13 @@ class IDS2PSETApp {
         const container = document.getElementById('pset-tree');
         container.innerHTML = '';
 
+        let hasVisiblePSets = false;
+
         for (const [name, pset] of Object.entries(this.psets)) {
             // PSet с regex не отображаются в списке
             if (pset.is_pattern) continue;
+
+            hasVisiblePSets = true;
 
             const node = document.createElement('div');
             node.className = 'tree-node';
@@ -262,6 +279,11 @@ class IDS2PSETApp {
                 </div>
             `;
             container.appendChild(node);
+        }
+
+        // Если нет PSet для отображения, скрываем контейнер
+        if (!hasVisiblePSets) {
+            container.innerHTML = '<div class="pset-tree__empty">Нет PSet для генерации (все PSet описаны через regex)</div>';
         }
 
         // Обработчики чекбоксов

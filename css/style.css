@@ -118,6 +118,18 @@ section {
     color: #ef4444;
 }
 
+.file-item__content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.file-item__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .file-item__warning {
     font-size: 0.85em;
     color: #f59e0b;
@@ -161,6 +173,13 @@ section {
     background: rgba(245, 158, 11, 0.1);
     border-left: 3px solid #f59e0b;
     margin: var(--spacing-xs) 0;
+}
+
+.pset-tree__empty {
+    color: var(--color-secondary);
+    font-style: italic;
+    padding: var(--spacing-md);
+    text-align: center;
 }
 
 .property-item {
