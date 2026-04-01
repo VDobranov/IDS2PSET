@@ -6,6 +6,7 @@ class PyodideBridge {
     constructor() {
         this.pyodide = null;
         this.initialized = false;
+        this.pythonModulesLoaded = false;
     }
 
     /**
@@ -16,9 +17,9 @@ class PyodideBridge {
             return this.pyodide;
         }
 
-        // Загрузка Pyodide
+        // Загрузка Pyodide (dev версия)
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+        script.src = 'https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js';
         await new Promise((resolve, reject) => {
             script.onload = resolve;
             script.onerror = reject;
@@ -27,7 +28,7 @@ class PyodideBridge {
 
         // Инициализация
         this.pyodide = await loadPyodide({
-            indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/'
+            indexURL: 'https://cdn.jsdelivr.net/pyodide/dev/full/'
         });
 
         this.initialized = true;
@@ -35,18 +36,52 @@ class PyodideBridge {
     }
 
     /**
-     * Загрузка Python модулей
+     * Загрузка Python модулей из src/ и wheels/
      */
     async loadModules() {
         await this.init();
-        
-        // Загрузка ifcopenshell wheel (локально)
+
+        if (this.pythonModulesLoaded) {
+            return true;
+        }
+
+        // Загрузка micropip для установки пакетов
         await this.pyodide.loadPackage('micropip');
         const micropip = this.pyodide.pyimport('micropip');
-        
-        // TODO: Загрузка локальных wheel файлов
-        // await micropip.install('./wheels/ifcopenshell-*.whl');
-        
+
+        // Установка ifcopenshell из локального wheel
+        try {
+            const wheelResponse = await fetch('./wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl');
+            const wheelBlob = await wheelResponse.blob();
+            const wheelArrayBuffer = await wheelBlob.arrayBuffer();
+
+            // Запись wheel в файловую систему Pyodide
+            this.pyodide.FS.writeFile('/tmp/ifcopenshell.whl', new Uint8Array(wheelArrayBuffer));
+            await micropip.install('/tmp/ifcopenshell.whl');
+        } catch (e) {
+            console.error('Ошибка установки ifcopenshell:', e);
+            throw new Error('ifcopenshell недоступен: ' + e.message);
+        }
+
+        // Копирование локальных модулей в файловую систему Pyodide
+        this.pyodide.FS.mkdir('/src');
+
+        // Загрузка ids_parser.py
+        const idsParserResponse = await fetch('./src/ids_parser.py');
+        const idsParserContent = await idsParserResponse.text();
+        this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
+
+        // Загрузка pset_generator.py
+        const psetGeneratorResponse = await fetch('./src/pset_generator.py');
+        const psetGeneratorContent = await psetGeneratorResponse.text();
+        this.pyodide.FS.writeFile('/src/pset_generator.py', psetGeneratorContent);
+
+        // Загрузка validator.py
+        const validatorResponse = await fetch('./src/validator.py');
+        const validatorContent = await validatorResponse.text();
+        this.pyodide.FS.writeFile('/src/validator.py', validatorContent);
+
+        this.pythonModulesLoaded = true;
         return true;
     }
 
@@ -57,19 +92,19 @@ class PyodideBridge {
      */
     async parseIDS(content) {
         await this.loadModules();
-        
+
         // Передача контента в Python
         this.pyodide.FS.writeFile('/tmp/input.ids', content);
-        
+
         // Выполнение Python кода
         const result = this.pyodide.runPython(`
             import sys
-            sys.path.append('/src')
+            sys.path.insert(0, '/src')
             from ids_parser import parse_ids_file
             import json
-            
+
             psets = parse_ids_file('/tmp/input.ids')
-            
+
             # Конвертация в JSON-сериализуемый формат
             result = {}
             for name, pset in psets.items():
@@ -88,10 +123,10 @@ class PyodideBridge {
                     ],
                     'applicable_entities': pset.applicable_entities
                 }
-            
+
             json.dumps(result)
         `);
-        
+
         return JSON.parse(result);
     }
 
@@ -103,11 +138,39 @@ class PyodideBridge {
      */
     async generateIFC(psets, selectedPSetNames) {
         await this.loadModules();
-        
-        // TODO: Реализация генерации IFC
-        // Это будет на следующем этапе
-        
-        return 'IFC-файл будет сгенерирован';
+
+        // Фильтрация выбранных PSet
+        const filteredPSetNames = selectedPSetNames || Object.keys(psets);
+
+        // Конвертация JS объекта в Python формат
+        const psetsJson = JSON.stringify(psets);
+        const selectedJson = JSON.stringify(filteredPSetNames);
+
+        // Выполнение Python кода
+        const ifcContent = this.pyodide.runPython(`
+            import sys
+            sys.path.insert(0, '/src')
+            from pset_generator import PSetGenerator
+            import json
+
+            # Загрузка данных
+            psets_data = json.loads('${psetsJson}')
+            selected_names = json.loads('${selectedJson}')
+
+            # Фильтрация
+            filtered_psets = {
+                name: pset for name, pset in psets_data.items()
+                if name in selected_names
+            }
+
+            # Генерация IFC
+            generator = PSetGenerator()
+            ifc_content = generator.generate(filtered_psets)
+
+            ifc_content
+        `);
+
+        return ifcContent;
     }
 
     /**
@@ -117,10 +180,23 @@ class PyodideBridge {
      */
     async validateIFC(ifcContent) {
         await this.loadModules();
-        
-        // TODO: Реализация валидации
-        
-        return { valid: true, errors: [] };
+
+        // Запись IFC в файл
+        this.pyodide.FS.writeFile('/tmp/output.ifc', ifcContent);
+
+        // Выполнение Python кода
+        const result = this.pyodide.runPython(`
+            import sys
+            sys.path.insert(0, '/src')
+            from validator import IFCValidator
+            import json
+
+            validator = IFCValidator()
+            result = validator.validate_file('/tmp/output.ifc')
+            json.dumps(result)
+        `);
+
+        return JSON.parse(result);
     }
 
     /**

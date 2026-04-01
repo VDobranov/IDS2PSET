@@ -32,4 +32,4 @@ Thumbs.db
 
 # Output files
 *.ifc
-!examples/*.ifc
+examples/
