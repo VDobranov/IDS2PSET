@@ -43,12 +43,17 @@
 ## 13.4 Инструменты валидации
 
 ### ifc-gherkin-rules
+- [Документация правил](https://buildingsmart.github.io/ifc-gherkin-rules/branches/main/features/index.html)
 - [Репозиторий](https://github.com/IFCJSON-Team/ifc-gherkin-rules)
-- Правила валидации IFC файлов
+- Правила валидации IFC файлов в формате Gherkin (BDD)
+
+**Использование:** При проблемах с валидацией IFC по правилам buildingSMART
 
 ### ifcopenshell.validate
 - Встроенный модуль ifcopenshell
 - Базовая валидация структуры IFC
+
+**Использование:** Быстрая проверка корректности IFC файла
 
 ---
 
