@@ -1,46 +1,65 @@
-# 11a. План: Валидация, скачивание, интеграция
+# 11a. План валидации
 
-## Этап 6b: Валидация в тестах
-
-**Инструменты:**
-- `ifcopenshell.validate()` — проверка структуры
-- `ifc-gherkin-rules` — проверка buildingSMART
-
-**Тесты:**
-- [ ] Тест валидации корректного IFC
-- [ ] Тест валидации с ошибками
-- [ ] Интеграция gherkin-rules в CI
-
-**Критерий готовности:** Все тесты с валидацией проходят
+**Назначение:** Детали валидации IFC. Общий статус этапа 7 см. в [11_implementation_plan.md](11_implementation_plan.md).
 
 ---
 
-## Этап 7: Скачивание
+## Инструменты
 
-- [ ] Создание Blob из IFC
-- [ ] Триггер скачивания
-- [ ] Имя файла на основе IDS
+### ifcopenshell.validate
 
-**Критерий готовности:** Файл скачивается
+Базовая проверка структуры IFC:
+- Наличие `IfcProjectLibrary`, `IfcPropertySetTemplate`, `IfcRelDeclares`
+- Атрибуты сущностей (Name, TemplateType)
 
----
+### ifc-gherkin-rules
 
-## Этап 8: Интеграция и полировка
-
-- [ ] Полный цикл: загрузка → анализ → генерация → скачивание
-- [ ] Обработка ошибок
-- [ ] Улучшение UI/UX
-
-**Тесты:**
-- [ ] E2E тест полного цикла
-
-**Критерий готовности:** Всё работает вместе
+Проверка по правилам buildingSMART (33 категории):
+```
+ALB, ALS, ANN, ASM, AXG, BBX, BLT, BRP, CLS, CTX,
+GDP, GEM, GRF, GRP, IFC, LAY, LIP, LOP, MAT, MPD,
+OJP, OJT, PSE, PJS, POR, QTY, SPA, SPS, SWE, SYS,
+TAS, VER, VRT
+```
+**PSE002:** имена PSet не должны начинаться с 'pset'
 
 ---
 
-## 11a.1 Ссылки
-- [[11_implementation_plan](11_implementation_plan.md) — Этапы 1-6
-- [[10_technical_decisions](10_technical_decisions.md) — Технические решения
+## Реализация
+
+| Файл | Назначение |
+|------|------------|
+| src/validator.py | Базовая валидация (ifcopenshell) |
+| src/gherkin_validator.py | 33 категории gherkin-rules |
+| vendor/ifc-gherkin-rules | Git submodule (buildingSMART) |
 
 ---
-*Версия: 0.1 | Статус: Черновик*
+
+## Тесты
+
+### tests/test_validator.py (10 тестов)
+
+test_validator_creation, test_validate_generated_ifc, test_validate_empty_ifc, test_validate_with_enumeration, test_validate_multiple_psets, test_get_summary, test_validate_ifc_project_library_exists, test_validate_property_templates_have_names, test_full_workflow_with_validation, test_real_ids_file_validation
+
+### tests/test_gherkin.py (7 тестов)
+
+test_validator_creation, test_validate_generated_ifc, test_validate_all_rules, test_get_summary, test_full_workflow_with_gherkin, test_real_ids_with_gherkin
+
+---
+
+## CI/CD
+
+**Pre-commit:** `pytest tests/ -v`
+
+**GitHub Actions:** `pytest tests/ -v --cov=src --cov-fail-under=90`
+
+---
+
+## Ссылки
+
+- [[11_implementation_plan](11_implementation_plan.md) — Общий план
+- [[10a_tdd](10a_tdd.md) — TDD
+- [ifc-gherkin-rules](https://buildingsmart.github.io/ifc-gherkin-rules/branches/main/features/index.html)
+
+---
+*Версия: 0.5 | Статус: Этап 7 выполнен ✅*
