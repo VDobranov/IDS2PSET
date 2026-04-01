@@ -195,7 +195,7 @@ class IDS2PSETApp {
                            ${this.selectedPSetNames.has(name) ? 'checked' : ''}
                            data-pset="${name}">
                     <label for="pset-${name}">
-                        📦 ${name} (${pset.template_type || 'PSET_TYPEDRIVENOVERRIDE'}, ${this.formatEntities(pset.applicable_entities)})
+                        📦 ${name} (${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
                 <div class="tree-node__children">
