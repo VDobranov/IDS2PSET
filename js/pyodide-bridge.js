@@ -51,11 +51,11 @@ class PyodideBridge {
         await this.pyodide.loadPackage('micropip');
         const micropip = this.pyodide.pyimport('micropip');
 
-        // Установка ifcopenshell из GitHub (только если нужен)
+        // Установка ifcopenshell из CDN (только если нужен)
         if (needIFCOpenShell && !this.ifcOpenshellLoaded) {
             try {
-                // Используем прямую ссылку на GitHub raw content
-                const wheelUrl = 'https://github.com/VDobranov/IDS2PSET/raw/refs/heads/main/wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
+                // Используем jsdelivr CDN для CORS доступа
+                const wheelUrl = 'https://cdn.jsdelivr.net/gh/VDobranov/IDS2PSET@main/wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
 
                 // Установка через micropip с URL
                 await micropip.install(wheelUrl);
