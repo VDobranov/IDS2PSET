@@ -25,6 +25,46 @@ class TestGherkinValidator:
     def test_validator_creation(self):
         """Test creating validator."""
         assert self.validator is not None
+        assert len(self.validator.RULE_CATEGORIES) == 33
+
+    def test_rule_categories_complete(self):
+        """Test all 33 rule categories are present."""
+        expected_categories = [
+            "ALB",
+            "ALS",
+            "ANN",
+            "ASM",
+            "AXG",
+            "BBX",
+            "BLT",
+            "BRP",
+            "CLS",
+            "CTX",
+            "GDP",
+            "GEM",
+            "GRF",
+            "GRP",
+            "IFC",
+            "LAY",
+            "LIP",
+            "LOP",
+            "MAT",
+            "MPD",
+            "OJP",
+            "OJT",
+            "PSE",
+            "PJS",
+            "POR",
+            "QTY",
+            "SPA",
+            "SPS",
+            "SWE",
+            "SYS",
+            "TAS",
+            "VER",
+            "VRT",
+        ]
+        assert self.validator.RULE_CATEGORIES == expected_categories
 
     def test_validate_generated_ifc(self):
         """Test gherkin validation of generated IFC."""
@@ -91,6 +131,72 @@ class TestGherkinValidator:
 
         assert "Errors: 1" in summary
         assert "Warnings: 1" in summary
+
+    def test_parse_results_with_scenarios(self):
+        """Test _parse_results with scenarios."""
+        result = {
+            "scenarios": [
+                {"name": "Test scenario", "status": "failed"},
+                {"name": "Passing scenario", "status": "passed"},
+            ]
+        }
+        self.validator._parse_results(result)
+        assert len(self.validator.errors) == 1
+        assert "Test scenario" in self.validator.errors[0]
+
+    def test_parse_results_with_outcomes(self):
+        """Test _parse_results with outcomes."""
+        result = {
+            "outcomes": [
+                {"severity": "error", "message": "Test error"},
+                {"severity": "warning", "message": "Test warning"},
+            ]
+        }
+        self.validator._parse_results(result)
+        assert len(self.validator.errors) == 1
+        assert len(self.validator.warnings) == 1
+        assert "Test error" in self.validator.errors
+        assert "Test warning" in self.validator.warnings
+
+    def test_validate_file(self):
+        """Test validate_file method."""
+        from pset_generator import PSetGenerator
+
+        generator = PSetGenerator()
+        psets = {
+            "TestPSet": {
+                "name": "TestPSet",
+                "properties": [
+                    {
+                        "name": "Property1",
+                        "data_type": "IFCTEXT",
+                        "description": "",
+                        "enum_values": [],
+                        "cardinality": "required",
+                    }
+                ],
+                "applicable_entities": ["IFCWALL"],
+            }
+        }
+        ifc_content = generator.generate(psets)
+
+        # Write to temp file
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ifc", delete=False) as f:
+            f.write(ifc_content)
+            temp_path = f.name
+
+        try:
+            result = self.validator.validate_file(temp_path)
+            assert result is not None
+            assert "valid" in result
+            assert "errors" in result
+            assert "warnings" in result
+        finally:
+            import os
+
+            os.unlink(temp_path)
 
 
 @pytest.mark.skipif(not GHERKIN_AVAILABLE, reason="ifc-gherkin-rules not available")
