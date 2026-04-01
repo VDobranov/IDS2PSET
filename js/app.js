@@ -195,8 +195,7 @@ class IDS2PSETApp {
                            ${this.selectedPSetNames.has(name) ? 'checked' : ''}
                            data-pset="${name}">
                     <label for="pset-${name}">
-                        📦 ${name} (${pset.properties.length} свойств,
-                        ${this.formatEntities(pset.applicable_entities)})
+                        📦 ${name} (${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
                 <div class="tree-node__children">
@@ -204,7 +203,6 @@ class IDS2PSETApp {
                         <div class="property-item">
                             ${this.getDataTypeIcon(prop.data_type)}
                             ${prop.name} (${prop.cardinality})
-                            ${prop.enum_values.length > 0 ? ` [${prop.enum_values.length} значений]` : ''}
                         </div>
                     `).join('')}
                 </div>
