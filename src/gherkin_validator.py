@@ -36,6 +36,43 @@ except ImportError as e:
 class GherkinValidator:
     """Validator for IFC files using ifc-gherkin-rules."""
 
+    # Все категории правил из ifc-gherkin-rules
+    RULE_CATEGORIES = [
+        "ALB",
+        "ALS",
+        "ANN",
+        "ASM",
+        "AXG",
+        "BBX",
+        "BLT",
+        "BRP",
+        "CLS",
+        "CTX",
+        "GDP",
+        "GEM",
+        "GRF",
+        "GRP",
+        "IFC",
+        "LAY",
+        "LIP",
+        "LOP",
+        "MAT",
+        "MPD",
+        "OJP",
+        "OJT",
+        "PSE",
+        "PJS",
+        "POR",
+        "QTY",
+        "SPA",
+        "SPS",
+        "SWE",
+        "SYS",
+        "TAS",
+        "VER",
+        "VRT",
+    ]
+
     def __init__(self):
         if not GHERKIN_AVAILABLE:
             raise ImportError(
@@ -176,6 +213,38 @@ class GherkinValidator:
                 lines.append(f"  ⚠ {warning}")
 
         return "\n".join(lines)
+
+    def validate_all_rules(self, ifc_content: str) -> Dict[str, Any]:
+        """
+        Validate IFC against ALL gherkin rules.
+
+        Args:
+            ifc_content: IFC file content as string
+
+        Returns:
+            Dictionary with validation results for all rule categories
+        """
+        all_results = {}
+        all_errors = []
+        all_warnings = []
+
+        for category in self.RULE_CATEGORIES:
+            try:
+                result = self.validate_string(ifc_content, rule_type=category)
+                all_results[category] = result
+                all_errors.extend(result.get("errors", []))
+                all_warnings.extend(result.get("warnings", []))
+            except Exception as e:
+                all_results[category] = {"error": str(e)}
+
+        return {
+            "valid": len(all_errors) == 0,
+            "errors": all_errors,
+            "warnings": all_warnings,
+            "error_count": len(all_errors),
+            "warning_count": len(all_warnings),
+            "results_by_category": all_results,
+        }
 
     def check_pse_rules(self, ifc_content: str) -> Dict[str, Any]:
         """

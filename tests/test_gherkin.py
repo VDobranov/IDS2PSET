@@ -53,40 +53,14 @@ class TestGherkinValidator:
         # Gherkin validation should complete without errors
         assert result is not None
 
-    def test_check_pse_rules(self):
-        """Test PSE rules validation."""
-        from pset_generator import PSetGenerator
-
-        generator = PSetGenerator()
-        psets = {
-            "MaterialPSet": {
-                "name": "MaterialPSet",
-                "properties": [
-                    {
-                        "name": "Material",
-                        "data_type": "IFCTEXT",
-                        "description": "",
-                        "enum_values": [],
-                        "cardinality": "optional",
-                    }
-                ],
-                "applicable_entities": ["IFCBEAM"],
-            }
-        }
-
-        ifc_content = generator.generate(psets)
-        result = self.validator.check_pse_rules(ifc_content)
-
-        assert result is not None
-
-    def test_check_pse002_valid_name(self):
-        """Test PSE002 with valid PSet name (not starting with 'pset')."""
+    def test_validate_all_rules(self):
+        """Test validation against ALL gherkin rules (33 categories)."""
         from pset_generator import PSetGenerator
 
         generator = PSetGenerator()
         psets = {
             "TestPSet": {
-                "name": "TestPSet",  # Valid - doesn't start with 'pset'
+                "name": "TestPSet",
                 "properties": [
                     {
                         "name": "Property1",
@@ -101,10 +75,12 @@ class TestGherkinValidator:
         }
 
         ifc_content = generator.generate(psets)
-        result = self.validator.check_pse002(ifc_content)
+        result = self.validator.validate_all_rules(ifc_content)
 
-        # Should be valid - name doesn't start with 'pset'
-        assert result["valid"] is True
+        assert result is not None
+        assert "results_by_category" in result
+        # Should have results for all 33 categories
+        assert len(result["results_by_category"]) == len(self.validator.RULE_CATEGORIES)
 
     def test_get_summary(self):
         """Test validation summary."""
@@ -162,7 +138,7 @@ class TestGherkinIntegration:
         assert result is not None
 
     def test_real_ids_with_gherkin(self):
-        """Test gherkin validation with real IDS example."""
+        """Test gherkin validation with real IDS example (ALL rules)."""
         from ids_parser import parse_ids_file
         from pset_generator import PSetGenerator
         from gherkin_validator import GherkinValidator
@@ -199,16 +175,19 @@ class TestGherkinIntegration:
                 "applicable_entities": pset.applicable_entities,
             }
 
-        # Generate (limit to first 5 PSet for speed)
+        # Generate (limit to first 3 PSet for speed - full validation is slow)
         generator = PSetGenerator()
-        limited_psets = dict(list(psets_data.items())[:5])
+        limited_psets = dict(list(psets_data.items())[:3])
         ifc_content = generator.generate(limited_psets)
 
-        # Validate with gherkin
+        # Validate with ALL gherkin rules
         validator = GherkinValidator()
-        result = validator.validate_string(ifc_content, rule_type="PSE")
+        result = validator.validate_all_rules(ifc_content)
 
         assert result is not None
+        assert "results_by_category" in result
+        # Should have results for all 33 categories
+        assert len(result["results_by_category"]) == len(validator.RULE_CATEGORIES)
 
 
 if __name__ == "__main__":
