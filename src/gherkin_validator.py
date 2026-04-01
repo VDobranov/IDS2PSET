@@ -112,37 +112,46 @@ class GherkinValidator:
         rt = rule_type_map.get(rule_type, RuleType.ALL if RuleType else None)
 
         try:
-            # Run validation - returns a generator
-            # Suppress stderr output from behave/django initialization
-            import io
-            import contextlib
+            # Run validation in TESTING mode to get results back
+            from main import ExecutionMode
 
-            stderr_capture = io.StringIO()
-            with contextlib.redirect_stderr(stderr_capture):
-                result_generator = run_gherkin_validation(
-                    filename=file_path,
-                    rule_type=rt,
-                    max_outcomes=max_outcomes,
-                    with_console_output=False,
+            result_generator = run_gherkin_validation(
+                filename=file_path,
+                rule_type=rt,
+                max_outcomes=max_outcomes,
+                with_console_output=False,
+                execution_mode=ExecutionMode.TESTING,  # Важно для получения результатов
+            )
+
+            # Iterate generator to get results
+            # Collect ALL results (outcomes, scenarios, etc.)
+            all_results = []
+            for result in result_generator:
+                all_results.append(result)
+
+            # Если результатов нет - behave упал до запуска тестов
+            if len(all_results) == 0:
+                self.errors.append(
+                    "Gherkin validation failed to run - check Django/setup errors"
                 )
+                return {
+                    "valid": False,
+                    "errors": self.errors,
+                    "warnings": self.warnings,
+                    "error_count": len(self.errors),
+                    "warning_count": len(self.warnings),
+                    "results": {},
+                }
 
-                # Iterate generator to get results
-                # Last result in generator contains the final validation summary
-                final_result = None
-                for result in result_generator:
-                    if isinstance(result, (dict, str)):
-                        final_result = result
+            # Parse all results
+            for result in all_results:
+                if result:  # Skip None results
+                    if isinstance(result, str):
+                        # JSON string result
+                        import json
 
-            # Parse results
-            if final_result:
-                if isinstance(final_result, str):
-                    # JSON string result
-                    import json
-
-                    self.results = json.loads(final_result)
-                else:
-                    self.results = final_result
-                self._parse_results(self.results)
+                        result = json.loads(result)
+                    self._parse_results(result)
 
         except Exception as e:
             self.errors.append(f"Gherkin validation error: {str(e)}")
@@ -185,27 +194,63 @@ class GherkinValidator:
 
     def _parse_results(self, result: Dict) -> None:
         """Parse gherkin validation results."""
-        # Results structure depends on gherkin output format
-        # Typically contains scenarios, steps, and outcomes
+        # Results can be:
+        # 1. Feature summary: {'feature_name': ..., 'rule_is_disabled': ...}
+        # 2. protocol_errors: {'protocol_errors': [...]}
+        # 3. caught_exceptions: {'caught_exceptions': [...]}
+        # 4. validation_outcome: {'severity': ..., 'outcome_code': ..., 'message': ...}
+        # 5. Old format with outcomes list: {'outcomes': [...], 'scenarios': [...]}
 
-        if "scenarios" in result:
-            for scenario in result["scenarios"]:
-                if scenario.get("status") == "failed":
-                    self.errors.append(
-                        f"Scenario '{scenario.get('name', 'unknown')}' failed"
-                    )
-                elif scenario.get("status") == "passed":
-                    pass  # OK
+        # Skip feature summaries
+        if "feature_name" in result and "rule_is_disabled" in result:
+            return
 
+        # Check for protocol errors
+        if "protocol_errors" in result:
+            for error in result["protocol_errors"]:
+                self.errors.append(f"Protocol error: {error}")
+
+        # Check for caught exceptions
+        if "caught_exceptions" in result:
+            for exc in result["caught_exceptions"]:
+                self.errors.append(
+                    f"Exception: {exc.get('type', 'Unknown')}: {exc.get('message', str(exc))}"
+                )
+
+        # Old format: outcomes list
         if "outcomes" in result:
             for outcome in result["outcomes"]:
                 severity = outcome.get("severity", "warning")
                 message = outcome.get("message", str(outcome))
-
                 if severity == "error":
                     self.errors.append(message)
-                else:
+                elif severity == "warning":
                     self.warnings.append(message)
+
+        # Old format: scenarios
+        if "scenarios" in result:
+            failed_count = 0
+            for scenario in result["scenarios"]:
+                if scenario.get("status") == "failed":
+                    failed_count += 1
+                    if failed_count <= 10:
+                        self.errors.append(
+                            f"Scenario '{scenario.get('name', 'unknown')}' failed"
+                        )
+            if failed_count > 10:
+                self.errors.append(f"... and {failed_count - 10} more failed scenarios")
+
+        # New format: direct outcome (from TESTING mode)
+        if "severity" in result and "outcomes" not in result:
+            severity = result.get("severity", "warning")
+            message = result.get("message", str(result))
+
+            if severity == "error":
+                self.errors.append(message)
+            elif severity == "warning":
+                self.warnings.append(message)
+            elif severity == "passed":
+                pass  # OK
 
     def get_summary(self) -> str:
         """Get validation summary as string."""

@@ -124,6 +124,7 @@ def validate_ifc_file(ifc_path):
                 print(f"   ✗ Найдено ошибок: {result['error_count']}")
                 for error in result["errors"][:5]:
                     print(f"      - {error}")
+                all_passed = False  # gherkin ошибка = провал всей валидации
         else:
             print("   ⚠ Gherkin validator недоступен")
 
