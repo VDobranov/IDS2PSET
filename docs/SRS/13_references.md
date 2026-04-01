@@ -44,8 +44,13 @@
 
 ### ifc-gherkin-rules
 - [Документация правил](https://buildingsmart.github.io/ifc-gherkin-rules/branches/main/features/index.html)
-- [Репозиторий](https://github.com/IFCJSON-Team/ifc-gherkin-rules)
+- [Репозиторий buildingSMART](https://github.com/buildingSMART/ifc-gherkin-rules)
 - Правила валидации IFC файлов в формате Gherkin (BDD)
+
+**Установка:**
+```bash
+pip install ifc-gherkin-rules
+```
 
 **Использование:** При проблемах с валидацией IFC по правилам buildingSMART
 

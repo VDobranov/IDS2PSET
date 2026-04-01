@@ -26,10 +26,11 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: bash -c 'source .venv/bin/activate && pytest tests/test.py -v'
+        entry: bash -c 'source .venv/bin/activate && PYTHONPATH=src pytest tests/ -v'
         language: system
         pass_filenames: false
         always_run: true
+        require_serial: true
 
       - id: js-test
         name: node --test
