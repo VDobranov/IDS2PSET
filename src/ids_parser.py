@@ -49,10 +49,37 @@ def _extract_value_or_pattern(elem, ns, xs_ns):
     return None
 
 
+def _extract_entity_with_type(entity_elem, ns, xs_ns):
+    """Extract entity name with optional predefined type."""
+    if entity_elem is None:
+        return None
+
+    # Get entity name
+    name_elem = entity_elem.find("ids:name", ns)
+    entity_name = None
+    if name_elem is not None:
+        entity_name = _extract_value_or_pattern(name_elem, ns, xs_ns)
+
+    # Get predefined type
+    predefined_type_elem = entity_elem.find("ids:predefinedType", ns)
+    predefined_type = None
+    if predefined_type_elem is not None:
+        predefined_type = _extract_value_or_pattern(predefined_type_elem, ns, xs_ns)
+
+    # Combine entity name with predefined type
+    if entity_name:
+        if predefined_type:
+            return f"{entity_name}/{predefined_type}"
+        return entity_name
+
+    return None
+
+
 def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
     """
     Parse IDS file and extract PSet requirements grouped by PSet name.
     Supports both simpleValue and xs:restriction with xs:pattern.
+    Combines PSet with same name but different entities.
 
     Args:
         file_path: Path to the IDS XML file
@@ -73,17 +100,15 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
     specifications = root.findall(".//ids:specification", ns)
 
     for spec in specifications:
-        # Get entity from applicability
+        # Get entity from applicability with predefined type
         entities = []
         applicability = spec.find("ids:applicability", ns)
         if applicability is not None:
             entity_elem = applicability.find("ids:entity", ns)
             if entity_elem is not None:
-                name_elem = entity_elem.find("ids:name", ns)
-                if name_elem is not None:
-                    entity_value = _extract_value_or_pattern(name_elem, ns, xs_ns)
-                    if entity_value:
-                        entities.append(entity_value)
+                entity_value = _extract_entity_with_type(entity_elem, ns, xs_ns)
+                if entity_value:
+                    entities.append(entity_value)
 
         # Get requirements
         requirements = spec.find("ids:requirements", ns)
@@ -145,7 +170,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             if prop_req.name not in existing_names:
                 psets[pset_name].properties.append(prop_req)
 
-            # Add entities
+            # Add/merge entities - combine all entities with comma
             for entity in entities:
                 if entity not in psets[pset_name].applicable_entities:
                     psets[pset_name].applicable_entities.append(entity)
