@@ -163,7 +163,7 @@ class IDS2PSETApp {
 
     /**
      * Форматирование списка entities для отображения
-     * Если больше 5 — показываем первое, многоточие и последнее
+     * Если больше 5 — показываем первое, многоточие, последнее и количество
      * @param {string[]} entities - Список entities
      * @returns {string} Отформатированная строка
      */
@@ -174,8 +174,8 @@ class IDS2PSETApp {
         if (entities.length <= 5) {
             return entities.join(', ');
         }
-        // Больше 5: первое, многоточие, последнее
-        return `${entities[0]}, ... , ${entities[entities.length - 1]}`;
+        // Больше 5: первое, многоточие, последнее и количество
+        return `${entities[0]}, ... , ${entities[entities.length - 1]} [${entities.length}]`;
     }
 
     /**
