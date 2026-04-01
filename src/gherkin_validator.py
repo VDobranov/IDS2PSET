@@ -112,23 +112,36 @@ class GherkinValidator:
         rt = rule_type_map.get(rule_type, RuleType.ALL if RuleType else None)
 
         try:
-            # Run validation
-            result = run_gherkin_validation(
-                filename=file_path,
-                rule_type=rt,
-                max_outcomes=max_outcomes,
-                with_console_output=False,
-            )
+            # Run validation - returns a generator
+            # Suppress stderr output from behave/django initialization
+            import io
+            import contextlib
+
+            stderr_capture = io.StringIO()
+            with contextlib.redirect_stderr(stderr_capture):
+                result_generator = run_gherkin_validation(
+                    filename=file_path,
+                    rule_type=rt,
+                    max_outcomes=max_outcomes,
+                    with_console_output=False,
+                )
+
+                # Iterate generator to get results
+                # Last result in generator contains the final validation summary
+                final_result = None
+                for result in result_generator:
+                    if isinstance(result, (dict, str)):
+                        final_result = result
 
             # Parse results
-            if isinstance(result, dict):
-                self.results = result
-                self._parse_results(result)
-            elif isinstance(result, str):
-                # JSON string result
-                import json
+            if final_result:
+                if isinstance(final_result, str):
+                    # JSON string result
+                    import json
 
-                self.results = json.loads(result)
+                    self.results = json.loads(final_result)
+                else:
+                    self.results = final_result
                 self._parse_results(self.results)
 
         except Exception as e:

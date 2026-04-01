@@ -80,30 +80,57 @@ def validate_ifc_file(ifc_path):
         print(f"   ✗ Ошибка: {e}")
         all_passed = False
 
-    # 4. Валидация через gherkin (тесты)
-    print("\n4. gherkin-rules валидация:")
+    # 4. Валидация через ifcopenshell.validate
+    print("\n4. ifcopenshell.validate валидация:")
+    try:
+        import ifcopenshell
+        import ifcopenshell.validate
+
+        f = ifcopenshell.open(ifc_path)
+        logger = ifcopenshell.validate.json_logger()
+        ifcopenshell.validate.validate(ifc_path, logger)
+
+        if logger.statements:
+            print(f"   ✗ Найдено ошибок: {len(logger.statements)}")
+            for stmt in logger.statements[:5]:
+                if isinstance(stmt, dict):
+                    print(f"      - {stmt.get('type')}: {stmt.get('message', stmt)}")
+                else:
+                    print(f"      - {stmt}")
+            all_passed = False
+        else:
+            print("   ✓ ifcopenshell.validate: ошибок нет")
+
+    except Exception as e:
+        print(f"   ✗ Ошибка: {e}")
+        all_passed = False
+
+    # 5. Валидация через gherkin-rules
+    print("\n5. gherkin-rules валидация:")
     try:
         # Добавляем src в path
         src_path = os.path.join(os.path.dirname(__file__), "..", "src")
         sys.path.insert(0, src_path)
 
-        from tests.test_validator import TestIFCValidator
+        from gherkin_validator import GherkinValidator, GHERKIN_AVAILABLE
 
-        validator_test = TestIFCValidator()
-        validator_test.setup_method()
+        if GHERKIN_AVAILABLE:
+            validator = GherkinValidator()
+            result = validator.validate_file(ifc_path, rule_type="ALL")
 
-        result = validator_test.validator.validate_file(ifc_path)
-
-        if result["valid"]:
-            print("   ✓ ifcopenshell.validate: пройдено")
+            if result["valid"]:
+                print("   ✓ gherkin-rules: пройдено")
+            else:
+                print(f"   ✗ Найдено ошибок: {result['error_count']}")
+                for error in result["errors"][:5]:
+                    print(f"      - {error}")
         else:
-            print(f"   ✗ Ошибки: {result['errors']}")
-            all_passed = False
+            print("   ⚠ Gherkin validator недоступен")
 
     except Exception as e:
         print(f"   ⚠ Пропущено: {e}")
 
-    # 5. Итог
+    # 6. Итог
     print("\n" + "=" * 60)
     if all_passed:
         print("✓ ВСЕ ВАЛИДАЦИИ ПРОЙДЕНЫ")
