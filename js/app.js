@@ -93,7 +93,7 @@ class IDS2PSETApp {
             try {
                 const content = await file.text();
                 const result = await window.pyodideBridge.parseIDS(content);
-                this.mergePSets(result);
+                this.mergePSets(result, file.name);
                 this.log(`✓ Распарсен: ${file.name}`);
             } catch (error) {
                 this.log(`✗ Ошибка парсинга ${file.name}: ${error.message}`);
@@ -109,11 +109,12 @@ class IDS2PSETApp {
     /**
      * Объединение PSet из разных IDS
      * @param {Object} newPSets - Новые данные PSet
+     * @param {string} sourceFile - Имя файла IDS источника
      */
-    mergePSets(newPSets) {
+    mergePSets(newPSets, sourceFile) {
         for (const [name, pset] of Object.entries(newPSets)) {
             if (!this.psets[name]) {
-                this.psets[name] = pset;
+                this.psets[name] = { ...pset, source: sourceFile };
                 this.selectedPSetNames.add(name);
             } else {
                 // Объединение свойств
@@ -156,7 +157,29 @@ class IDS2PSETApp {
             btn.addEventListener('click', (e) => {
                 const name = e.target.dataset.file;
                 this.files.delete(name);
+
+                // Удаляем PSet из этого IDS
+                const psetsToRemove = [];
+                for (const [psetName, pset] of Object.entries(this.psets)) {
+                    if (pset.source === name) {
+                        psetsToRemove.push(psetName);
+                        this.selectedPSetNames.delete(psetName);
+                    }
+                }
+                psetsToRemove.forEach(psetName => delete this.psets[psetName]);
+
+                // Скрываем панель деталей если она открыта
+                const detailsPanel = document.getElementById('pset-details');
+                if (detailsPanel) {
+                    detailsPanel.classList.add('hidden');
+                }
+
                 this.renderFilesList();
+                this.renderPSetTree();
+
+                if (Object.keys(this.psets).length === 0) {
+                    document.getElementById('preview-section').classList.add('hidden');
+                }
             });
         });
     }
