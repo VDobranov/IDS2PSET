@@ -15,6 +15,7 @@ class PropertyRequirement:
     cardinality: str
     description: str = ""
     enum_values: List[str] = field(default_factory=list)
+    template_type: str = "P_SINGLEVALUE"
 
 
 @dataclass

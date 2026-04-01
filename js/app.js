@@ -199,12 +199,18 @@ class IDS2PSETApp {
                     </label>
                 </div>
                 <div class="tree-node__children">
-                    ${pset.properties.map(prop => `
+                    ${pset.properties.map(prop => {
+                        const measureType = prop.data_type || 'IfcText';
+                        const templateType = prop.template_type || 'P_SINGLEVALUE';
+                        return `
                         <div class="property-item">
-                            ${this.getDataTypeIcon(prop.data_type)}
-                            ${prop.name} (${prop.cardinality})
+                            <div class="property-item__header">
+                                ${this.getDataTypeIcon(prop.data_type)}
+                                ${prop.name} (${measureType}, ${templateType})
+                            </div>
+                            ${prop.description ? `<div class="property-item__description">${prop.description}</div>` : ''}
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             `;
             container.appendChild(node);
