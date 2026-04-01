@@ -9,7 +9,7 @@ class IDS2PSETApp {
         this.selectedPSetNames = new Set();
         this.ifcContent = null;
         this.logs = [];
-        
+
         this.init();
     }
 
@@ -162,6 +162,23 @@ class IDS2PSETApp {
     }
 
     /**
+     * Форматирование списка entities для отображения
+     * Если больше 5 — показываем первое, многоточие и последнее
+     * @param {string[]} entities - Список entities
+     * @returns {string} Отформатированная строка
+     */
+    formatEntities(entities) {
+        if (!entities || entities.length === 0) {
+            return '';
+        }
+        if (entities.length <= 5) {
+            return entities.join(', ');
+        }
+        // Больше 5: первое, многоточие, последнее
+        return `${entities[0]}, ... , ${entities[entities.length - 1]}`;
+    }
+
+    /**
      * Отрисовка дерева PSet
      */
     renderPSetTree() {
@@ -173,13 +190,13 @@ class IDS2PSETApp {
             node.className = 'tree-node';
             node.innerHTML = `
                 <div class="tree-node__header">
-                    <input type="checkbox" 
-                           id="pset-${name}" 
+                    <input type="checkbox"
+                           id="pset-${name}"
                            ${this.selectedPSetNames.has(name) ? 'checked' : ''}
                            data-pset="${name}">
                     <label for="pset-${name}">
-                        📦 ${name} (${pset.properties.length} свойств, 
-                        ${pset.applicable_entities.join(', ')})
+                        📦 ${name} (${pset.properties.length} свойств,
+                        ${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
                 <div class="tree-node__children">
