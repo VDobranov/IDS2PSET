@@ -112,6 +112,9 @@ section {
     color: var(--color-secondary);
     cursor: pointer;
     padding: var(--spacing-sm);
+    font-size: 1.5em;
+    line-height: 1;
+    margin-left: auto;
 }
 
 .file-item__remove:hover {
