@@ -194,19 +194,20 @@ class IDS2PSETApp {
                            id="pset-${name}"
                            ${this.selectedPSetNames.has(name) ? 'checked' : ''}
                            data-pset="${name}">
-                    <label for="pset-${name}" class="pset-label">
-                        📦 ${name} (${this.formatEntities(pset.applicable_entities)})
+                    <label for="pset-${name}">
+                        📦 ${name} (${pset.template_type || 'PSET_TYPEDRIVENOVERRIDE'}, ${this.formatEntities(pset.applicable_entities)})
                     </label>
+                </div>
+                <div class="tree-node__children">
+                    ${pset.properties.map(prop => `
+                        <div class="property-item">
+                            ${this.getDataTypeIcon(prop.data_type)}
+                            ${prop.name} (${prop.cardinality})
+                        </div>
+                    `).join('')}
                 </div>
             `;
             container.appendChild(node);
-
-            // Обработчик клика для отображения деталей
-            const label = node.querySelector('.pset-label');
-            label.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showPSetDetails(name, pset);
-            });
         }
 
         // Обработчики чекбоксов
@@ -220,27 +221,6 @@ class IDS2PSETApp {
                 }
             });
         });
-    }
-
-    /**
-     * Показать детали PSet
-     * @param {string} name - Имя PSet
-     * @param {Object} pset - Данные PSet
-     */
-    showPSetDetails(name, pset) {
-        const detailsPanel = document.getElementById('pset-details');
-        const nameEl = document.getElementById('details-name');
-        const descEl = document.getElementById('details-description');
-        const typeEl = document.getElementById('details-type');
-        const entityEl = document.getElementById('details-entity');
-
-        // PSet из IDS не имеет Description и TemplateType по умолчанию
-        nameEl.textContent = name;
-        descEl.textContent = pset.description || 'None';
-        typeEl.textContent = pset.template_type || 'PSET_TYPEDRIVENOVERRIDE';
-        entityEl.textContent = pset.applicable_entities.join(',');
-
-        detailsPanel.classList.remove('hidden');
     }
 
     /**

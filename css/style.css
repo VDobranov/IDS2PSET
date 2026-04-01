@@ -148,42 +148,9 @@ section {
     margin-left: var(--spacing-md);
 }
 
-/* PSet Container with Details */
-.pset-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
-    margin: var(--spacing-md) 0;
-}
-
-/* PSet Details Panel */
-.pset-details {
-    background: var(--color-background);
-    border-radius: var(--radius);
-    padding: var(--spacing-md);
-}
-
-.pset-details h3 {
-    margin-top: 0;
-    margin-bottom: var(--spacing-md);
-    color: var(--color-primary);
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: 150px 1fr;
-    gap: var(--spacing-sm);
-    align-items: start;
-}
-
-.details-label {
-    color: var(--color-secondary);
-    font-size: 0.9em;
-}
-
-.details-value {
+.property-item {
+    padding: var(--spacing-xs) 0;
     color: var(--color-text);
-    word-break: break-word;
 }
 
 /* Buttons */
