@@ -80,8 +80,8 @@ class IDS2PSETApp {
      */
     async handleFiles(fileList) {
         for (const file of fileList) {
-            if (!file.name.endsWith('.ids')) {
-                this.log(`⚠️ Пропущен файл: ${file.name} (не .ids)`);
+            if (!file.name.endsWith('.ids') && !file.name.endsWith('.xml')) {
+                this.log(`⚠️ Пропущен файл: ${file.name} (не .ids или .xml)`);
                 continue;
             }
 
