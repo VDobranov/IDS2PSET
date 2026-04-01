@@ -305,3 +305,61 @@ class TestE2EErrorHandling:
         # Should generate valid (but empty) IFC
         assert len(ifc_content) > 0
         assert "IFC4" in ifc_content
+
+
+@pytest.mark.skipif(not ALL_MODULES_AVAILABLE, reason="Modules not available")
+class TestIFCValidationScript:
+    """Tests for validate_ifc_playwright.py script."""
+
+    def test_validate_generated_ifc(self):
+        """Test validation script with generated IFC."""
+        from validate_ifc_playwright import validate_ifc_file
+        import tempfile
+
+        # Generate IFC
+        generator = PSetGenerator()
+        psets = {
+            "TestPSet": {
+                "name": "TestPSet",
+                "properties": [
+                    {
+                        "name": "Property1",
+                        "data_type": "IFCTEXT",
+                        "description": "",
+                        "enum_values": [],
+                        "cardinality": "required",
+                    }
+                ],
+                "applicable_entities": ["IFCWALL"],
+            }
+        }
+        ifc_content = generator.generate(psets)
+
+        # Write to temp file
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ifc", delete=False) as f:
+            f.write(ifc_content)
+            temp_path = f.name
+
+        try:
+            # Run validation
+            result = validate_ifc_file(temp_path)
+            assert result is True, "Validation should pass"
+        finally:
+            os.unlink(temp_path)
+
+    def test_validate_fixture_ifc(self):
+        """Test validation script with Playwright generated IFC."""
+        from validate_ifc_playwright import validate_ifc_file
+
+        ifc_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            ".playwright-mcp",
+            "IDS2PSET-Library.ifc",
+        )
+
+        if not os.path.exists(ifc_path):
+            pytest.skip("Playwright IFC file not found")
+
+        result = validate_ifc_file(ifc_path)
+        assert result is True, "Validation should pass"
