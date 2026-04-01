@@ -60,17 +60,11 @@ class PyodideBridge {
                 const wheelData = new Uint8Array(wheelArrayBuffer);
 
                 // Запись wheel в файловую систему Pyodide
-                const wheelPath = '/tmp/ifcopenshell.whl';
+                const wheelPath = '/tmp/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
                 this.pyodide.FS.writeFile(wheelPath, wheelData);
 
-                // Импорт wheel напрямую через Python
-                this.pyodide.runPython(`
-                    import sys
-                    from zipimport import zipimporter
-                    importer = zipimporter('${wheelPath}')
-                    importer.load_module('ifcopenshell')
-                    sys.modules['ifcopenshell'] = importer.load_module('ifcopenshell')
-                `);
+                // Установка через micropip с абсолютным путём
+                await micropip.install('file:' + wheelPath);
                 this.ifcOpenshellLoaded = true;
             } catch (e) {
                 console.error('Ошибка установки ifcopenshell:', e);
