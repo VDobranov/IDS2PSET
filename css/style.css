@@ -41,8 +41,8 @@ body {
 
 /* ==================== ЛЕВАЯ ПАНЕЛЬ ==================== */
 .sidebar {
-    width: 400px;
-    min-width: 400px;
+    width: 38.2%;
+    min-width: 380px;
     background: var(--sidebar-bg);
     color: var(--sidebar-text);
     display: flex;
@@ -253,8 +253,8 @@ body {
 }
 
 .pset-column {
-    min-width: 350px;
-    max-width: 350px;
+    min-width: 400px;
+    max-width: 500px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
