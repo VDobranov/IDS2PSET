@@ -67,11 +67,9 @@ class IDS2PSETApp {
     setupButtons() {
         const generateBtn = document.getElementById('generate-btn');
         const downloadBtn = document.getElementById('download-btn');
-        const logBtn = document.getElementById('log-btn');
 
         generateBtn?.addEventListener('click', () => this.generate());
         downloadBtn?.addEventListener('click', () => this.download());
-        logBtn?.addEventListener('click', () => this.toggleLog());
     }
 
     /**
@@ -106,11 +104,13 @@ class IDS2PSETApp {
         const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
 
         if (hasValidPSets) {
-            this.renderPSetTree();
+            this.renderPSetColumns();
             document.getElementById('preview-section').classList.remove('hidden');
+            document.getElementById('generate-btn').disabled = false;
         } else {
             // Если все PSet с regex, скрываем preview-section
             document.getElementById('preview-section').classList.add('hidden');
+            document.getElementById('generate-btn').disabled = true;
         }
     }
 
@@ -157,9 +157,11 @@ class IDS2PSETApp {
             // Подсчитываем PSet и свойства с regex patterns для этого файла
             let patternPSetCount = 0;
             let patternPropCount = 0;
+            let validPSetCount = 0;
             for (const [psetName, pset] of Object.entries(this.psets)) {
                 if (pset.source === name) {
                     if (pset.is_pattern) patternPSetCount++;
+                    else validPSetCount++;
                     patternPropCount += pset.properties.filter(p => p.is_pattern).length;
                 }
             }
@@ -200,7 +202,7 @@ class IDS2PSETApp {
                 }
 
                 this.renderFilesList();
-                this.renderPSetTree();
+                this.renderPSetColumns();
 
                 // Проверяем есть ли PSet без regex
                 const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
@@ -208,6 +210,9 @@ class IDS2PSETApp {
                 if (!hasValidPSets) {
                     document.getElementById('preview-section').classList.add('hidden');
                     document.getElementById('result-section').classList.add('hidden');
+                    document.getElementById('generate-btn').disabled = true;
+                } else {
+                    document.getElementById('generate-btn').disabled = false;
                 }
             });
         });
@@ -231,28 +236,65 @@ class IDS2PSETApp {
     }
 
     /**
-     * Отрисовка дерева PSet
+     * Отрисовка колонок PSet для каждого IDS
      */
-    renderPSetTree() {
-        const container = document.getElementById('pset-tree');
+    renderPSetColumns() {
+        const container = document.getElementById('pset-container');
         container.innerHTML = '';
 
-        let hasVisiblePSets = false;
-
+        // Группируем PSet по источнику (IDS файлу)
+        const psetsBySource = {};
         for (const [name, pset] of Object.entries(this.psets)) {
-            // PSet с regex не отображаются в списке
-            if (pset.is_pattern) continue;
+            if (!psetsBySource[pset.source]) {
+                psetsBySource[pset.source] = [];
+            }
+            psetsBySource[pset.source].push({ name, pset });
+        }
 
-            hasVisiblePSets = true;
+        // Создаём колонку для каждого IDS файла
+        for (const [source, psetList] of Object.entries(psetsBySource)) {
+            const column = document.createElement('div');
+            column.className = 'pset-column';
 
-            const node = document.createElement('div');
-            node.className = 'tree-node';
+            // Фильтруем PSet с regex
+            const validPSets = psetList.filter(({ pset }) => !pset.is_pattern);
 
-            // Подсчитываем свойства с regex
-            const patternProps = pset.properties.filter(p => p.is_pattern);
-            const patternCount = patternProps.length;
+            column.innerHTML = `
+                <div class="pset-column__header">
+                    <div class="pset-column__title">📄 ${source}</div>
+                </div>
+                <div class="pset-column__content">
+                    ${validPSets.length === 0
+                        ? '<div class="pset-column__empty">Нет PSet для генерации (все описаны через regex)</div>'
+                        : `<div class="pset-tree">${validPSets.map(({ name, pset }) => this.renderPSetNode(name, pset)).join('')}</div>`
+                    }
+                </div>
+            `;
+            container.appendChild(column);
+        }
 
-            node.innerHTML = `
+        // Обработчики чекбоксов
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const name = e.target.dataset.pset;
+                if (e.target.checked) {
+                    this.selectedPSetNames.add(name);
+                } else {
+                    this.selectedPSetNames.delete(name);
+                }
+            });
+        });
+    }
+
+    /**
+     * Отрисовка узла PSet
+     */
+    renderPSetNode(name, pset) {
+        const patternProps = pset.properties.filter(p => p.is_pattern);
+        const patternCount = patternProps.length;
+
+        return `
+            <div class="tree-node">
                 <div class="tree-node__header">
                     <input type="checkbox"
                            id="pset-${name}"
@@ -277,26 +319,8 @@ class IDS2PSETApp {
                         </div>
                     `}).join('')}
                 </div>
-            `;
-            container.appendChild(node);
-        }
-
-        // Если нет PSet для отображения, скрываем контейнер
-        if (!hasVisiblePSets) {
-            container.innerHTML = '<div class="pset-tree__empty">Нет PSet для генерации (все PSet описаны через regex)</div>';
-        }
-
-        // Обработчики чекбоксов
-        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                const name = e.target.dataset.pset;
-                if (e.target.checked) {
-                    this.selectedPSetNames.add(name);
-                } else {
-                    this.selectedPSetNames.delete(name);
-                }
-            });
-        });
+            </div>
+        `;
     }
 
     /**
@@ -397,14 +421,6 @@ class IDS2PSETApp {
         URL.revokeObjectURL(url);
 
         this.log('⬇ Файл скачан');
-    }
-
-    /**
-     * Переключение панели логов
-     */
-    toggleLog() {
-        const section = document.getElementById('log-section');
-        section.classList.toggle('hidden');
     }
 
     /**

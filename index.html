@@ -7,69 +7,93 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <h1>IDS2PSET</h1>
-        <p>Генератор библиотек свойств на основе IDS</p>
-    </header>
+    <div class="app-container">
+        <!-- Левая панель: управление и лог -->
+        <aside class="sidebar">
+            <header class="sidebar__header">
+                <h1>IDS2PSET</h1>
+                <p>Генератор библиотек свойств на основе IDS</p>
+            </header>
 
-    <main>
-        <!-- Drop zone for IDS files -->
-        <section id="upload-section">
-            <div class="drop-zone" id="drop-zone">
-                <div class="drop-zone__prompt">
-                    <svg class="icon" viewBox="0 0 24 24" width="48" height="48">
-                        <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            <section class="sidebar__section">
+                <h2 class="sidebar__title">ФАЙЛЫ ДЛЯ ПРОВЕРКИ</h2>
+
+                <div class="form-group">
+                    <label>IDS файл:</label>
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone__prompt">
+                            <svg class="icon" viewBox="0 0 24 24" width="32" height="32">
+                                <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                            </svg>
+                            <p>Перетащите IDS-файлы сюда</p>
+                            <p class="hint">или кликните для выбора</p>
+                        </div>
+                        <input type="file" id="file-input" accept=".ids,.xml" multiple hidden>
+                    </div>
+                </div>
+
+                <!-- Загруженные файлы -->
+                <div id="files-list" class="files-list"></div>
+            </section>
+
+            <section class="sidebar__section">
+                <h2 class="sidebar__title">ФОРМАТ ОТЧЁТА</h2>
+                <div class="form-group">
+                    <select id="report-format" class="form-select">
+                        <option value="ifc">IFC библиотека</option>
+                    </select>
+                    <button id="generate-btn" class="btn btn-primary" disabled>Сгенерировать IFC</button>
+                </div>
+            </section>
+
+            <section class="sidebar__section sidebar__section--grow">
+                <h2 class="sidebar__title">СООБЩЕНИЯ</h2>
+                <pre id="log-content" class="log-content"></pre>
+            </section>
+
+            <footer class="sidebar__footer">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M12 2L2 22h20L12 2zm0 4l6 13H6l6-13z"/>
                     </svg>
-                    <p>Перетащите IDS-файлы сюда</p>
-                    <p class="hint">или кликните для выбора</p>
                 </div>
-                <input type="file" id="file-input" accept=".ids,.xml" multiple hidden>
-            </div>
-
-            <!-- Uploaded files list -->
-            <div id="files-list" class="files-list"></div>
-        </section>
-
-        <!-- PSet Preview Section -->
-        <section id="preview-section" class="hidden">
-            <h2>Найденные шаблоны свойств</h2>
-            <div id="pset-tree" class="pset-tree"></div>
-            <div class="actions">
-                <button id="generate-btn" class="btn btn-primary">Сгенерировать IFC</button>
-            </div>
-        </section>
-
-        <!-- Progress Section -->
-        <section id="progress-section" class="hidden">
-            <div class="progress-bar">
-                <div class="progress-bar__fill" id="progress-fill"></div>
-            </div>
-            <p id="progress-text">Обработка...</p>
-        </section>
-
-        <!-- Result Section -->
-        <section id="result-section" class="hidden">
-            <div class="result success">
-                <h2>✅ IFC-файл сгенерирован успешно!</h2>
-                <div class="stats" id="stats"></div>
-                <p class="file-info" id="file-info"></p>
-                <div class="actions">
-                    <button id="download-btn" class="btn btn-primary">⬇ Скачать IFC</button>
-                    <button id="log-btn" class="btn btn-secondary">📋 Лог</button>
+                <div class="logo logo--right">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
                 </div>
-            </div>
-        </section>
+            </footer>
+        </aside>
 
-        <!-- Log Panel -->
-        <section id="log-section" class="hidden">
-            <h2>Лог процесса</h2>
-            <pre id="log-content" class="log-content"></pre>
-        </section>
-    </main>
+        <!-- Правая панель: PSet списки -->
+        <main class="content">
+            <!-- PSet Preview Section -->
+            <section id="preview-section" class="hidden">
+                <h2 class="content__title">Найденные шаблоны свойств</h2>
+                <div id="pset-container" class="pset-container"></div>
+            </section>
 
-    <footer>
-        <p>IDS2PSET — бессерверное веб-приложение для генерации IFC библиотек</p>
-    </footer>
+            <!-- Progress Section -->
+            <section id="progress-section" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-bar__fill" id="progress-fill"></div>
+                </div>
+                <p id="progress-text">Обработка...</p>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result-section" class="hidden">
+                <div class="result success">
+                    <h2>✅ IFC-файл сгенерирован успешно!</h2>
+                    <div class="stats" id="stats"></div>
+                    <p class="file-info" id="file-info"></p>
+                    <div class="actions">
+                        <button id="download-btn" class="btn btn-primary">⬇ Скачать IFC</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script src="js/pyodide-bridge.js"></script>
     <script src="js/app.js"></script>
