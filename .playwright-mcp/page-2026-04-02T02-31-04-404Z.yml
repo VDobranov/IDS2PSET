@@ -1,0 +1,82 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - heading "IDS2PSET" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Генератор библиотек свойств на основе IDS
+    - generic [ref=e7]:
+      - generic [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+        - paragraph [ref=e13]: Перетащите IDS-файлы сюда
+        - paragraph [ref=e14]: или кликните для выбора
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]: ✓ IDS_v1.0_Требования_МОГЭ_к_ЦИМ_КР_v3.2.ids
+          - button "×" [ref=e35] [cursor=pointer]
+        - generic [ref=e36]: ⚠️ 1 свойств с regex
+    - generic [ref=e16]:
+      - combobox [ref=e17]:
+        - option "IFC библиотека" [selected]
+      - button "Сгенерировать IFC" [ref=e18] [cursor=pointer]
+    - generic [ref=e19]:
+      - heading "СООБЩЕНИЯ" [level=2] [ref=e20]
+      - generic [ref=e21]: "[07:30:20] Приложение инициализировано [07:30:43] 📁 Загрузка: IDS_v1.0_Требования_МОГЭ_к_ЦИМ_КР_v3.2.ids [07:30:44] ✓ Распарсен: IDS_v1.0_Требования_МОГЭ_к_ЦИМ_КР_v3.2.ids"
+    - generic [ref=e22]:
+      - img [ref=e24]
+      - img [ref=e27]
+  - main [ref=e29]:
+    - generic [ref=e37]:
+      - heading "Найденные шаблоны свойств" [level=2] [ref=e38]
+      - generic [ref=e40]:
+        - generic [ref=e42]: 📄 IDS_v1.0_Требования_МОГЭ_к_ЦИМ_КР_v3.2.ids
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46] [cursor=pointer]:
+              - checkbox "📦 МОГЭ_КСИ ()" [checked] [ref=e47]
+              - generic [ref=e48]: 📦 МОГЭ_КСИ ()
+            - generic [ref=e49]:
+              - generic [ref=e51]: 🔤 КСИ Код класса#XNKC0001 (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e53]: 🔤 КСИ Наименование класса#XNKC0002 (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e55]: 🔤 КСИ Класс строительной информации#XNKC0003 (IFCTEXT, P_SINGLEVALUE)
+          - generic [ref=e56]:
+            - generic [ref=e57] [cursor=pointer]:
+              - checkbox "📦 МОГЭ_Информация ()" [checked] [ref=e58]
+              - generic [ref=e59]: 📦 МОГЭ_Информация ()
+            - generic [ref=e60]:
+              - generic [ref=e62]: 🔤 Обозначение (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e64]: 🔤 Наименование (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e66]: 🔤 Марка (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e68]: 🔤 Способ заглубления (IFCTEXT, P_SINGLEVALUE)
+          - generic [ref=e69]:
+            - generic [ref=e70] [cursor=pointer]:
+              - checkbox "📦 МОГЭ_Геометрические параметры ()" [checked] [ref=e71]
+              - generic [ref=e72]: 📦 МОГЭ_Геометрические параметры ()
+            - generic [ref=e73]:
+              - generic [ref=e75]: 📏 Толщина (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e77]: 📏 Длина (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e79]: 📏 Высота (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e81]: 📄 Площадь (IFCAREAMEASURE, P_SINGLEVALUE)
+              - generic [ref=e83]: 📦 Объем (IFCVOLUMEMEASURE, P_SINGLEVALUE)
+              - generic [ref=e85]: 📏 Ширина (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e87]: 📏 Размеры сечения (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e89]: 📏 Длина срубки (IFCLENGTHMEASURE, P_SINGLEVALUE)
+              - generic [ref=e91]: 📄 Площадь поверхности (IFCAREAMEASURE, P_SINGLEVALUE)
+          - generic [ref=e92]:
+            - generic [ref=e93] [cursor=pointer]:
+              - checkbox "📦 МОГЭ_Пожарные параметры ()" [checked] [ref=e94]
+              - generic [ref=e95]: 📦 МОГЭ_Пожарные параметры ()
+            - generic [ref=e96]:
+              - generic [ref=e98]: 🔤 Предел огнестойкости (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e100]: ☑ Противопожарная преграда (IFCBOOLEAN, P_SINGLEVALUE)
+              - generic [ref=e102]: 🔤 Тип противопожарной преграды (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e104]: 🔤 Класс пожарной опасности (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e106]: 🔤 Тип огнезащиты (IFCTEXT, P_SINGLEVALUE)
+          - generic [ref=e107]:
+            - generic [ref=e108] [cursor=pointer]:
+              - checkbox "📦 МОГЭ_Строительные параметры ()" [checked] [ref=e109]
+              - generic [ref=e110]: 📦 МОГЭ_Строительные параметры ()
+            - generic [ref=e111]: ⚠️ 1 свойств описаны через regex — не будут созданы
+            - generic [ref=e112]:
+              - generic [ref=e114]: 🔤 Материал (IFCTEXT, P_SINGLEVALUE)
+              - generic [ref=e116]: ☑ Наружная (IFCBOOLEAN, P_SINGLEVALUE)
+              - generic [ref=e118]: 🔢 Масса (IFCREAL, P_SINGLEVALUE)
+              - generic [ref=e120]: 🔤 Тип (IFCTEXT, P_SINGLEVALUE)

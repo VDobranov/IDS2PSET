@@ -163,9 +163,17 @@ class PyodideBridge {
             from pset_generator import PSetGenerator
             import json
 
-            # Загрузка данных
-            psets_data = json.loads('${psetsJson}')
-            selected_names = json.loads('${selectedJson}')
+            # Загрузка данных через Heredoc (избегаем проблем с экранированием)
+            import io
+            _psets_buffer = io.StringIO()
+            _psets_buffer.write('''${psetsJson.replace(/'''/g, "' ' '")}''')
+            _psets_buffer.seek(0)
+            psets_data = json.load(_psets_buffer)
+
+            _selected_buffer = io.StringIO()
+            _selected_buffer.write('''${selectedJson.replace(/'''/g, "' ' '")}''')
+            _selected_buffer.seek(0)
+            selected_names = json.load(_selected_buffer)
 
             # Фильтрация
             filtered_psets = {

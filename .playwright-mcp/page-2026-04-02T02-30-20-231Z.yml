@@ -1,0 +1,20 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - heading "IDS2PSET" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Генератор библиотек свойств на основе IDS
+    - generic [ref=e10] [cursor=pointer]:
+      - img [ref=e11]
+      - paragraph [ref=e13]: Перетащите IDS-файлы сюда
+      - paragraph [ref=e14]: или кликните для выбора
+    - generic [ref=e16]:
+      - combobox [ref=e17]:
+        - option "IFC библиотека" [selected]
+      - button "Сгенерировать IFC" [disabled] [ref=e18]
+    - generic [ref=e19]:
+      - heading "СООБЩЕНИЯ" [level=2] [ref=e20]
+      - generic [ref=e21]: "[07:30:20] Приложение инициализировано"
+    - generic [ref=e22]:
+      - img [ref=e24]
+      - img [ref=e27]
+  - main [ref=e29]
