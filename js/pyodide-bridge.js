@@ -152,23 +152,19 @@ class PyodideBridge {
         // Фильтрация выбранных PSet
         const filteredPSetNames = selectedPSetNames || Object.keys(psets);
 
-        // Конвертация JS объекта в Python формат через base64 (избегаем проблем с экранированием)
-        const psetsJson = JSON.stringify(psets);
-        const selectedJson = JSON.stringify(filteredPSetNames);
-        const psetsBase64 = btoa(unescape(encodeURIComponent(psetsJson)));
-        const selectedBase64 = btoa(unescape(encodeURIComponent(selectedJson)));
+        // Используем Pyodide toPy для прямой передачи данных в Python
+        const psetsPy = this.pyodide.toPy(psets);
+        const selectedPy = this.pyodide.toPy(filteredPSetNames);
+
+        // Передаём переменные в Python globals
+        this.pyodide.globals.set("psets_data", psetsPy);
+        this.pyodide.globals.set("selected_names", selectedPy);
 
         // Выполнение Python кода
         const ifcContent = this.pyodide.runPython(`
             import sys
             sys.path.insert(0, '/src')
             from pset_generator import PSetGenerator
-            import json
-            import base64
-
-            # Декодирование данных из base64
-            psets_data = json.loads(base64.b64decode('${psetsBase64}').decode('utf-8'))
-            selected_names = json.loads(base64.b64decode('${selectedBase64}').decode('utf-8'))
 
             # Фильтрация
             filtered_psets = {
@@ -182,6 +178,10 @@ class PyodideBridge {
 
             ifc_content
         `);
+
+        // Очистка
+        psetsPy.destroy();
+        selectedPy.destroy();
 
         return ifcContent;
     }
