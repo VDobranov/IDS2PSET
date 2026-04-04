@@ -7,7 +7,7 @@ class IDS2PSETApp {
         this.files = new Map();
         this.psets = {};
         this.selectedPSetNames = new Set();
-        this.ifcContent = null;
+        this.ifcByIDS = {}; // { idsName: ifcContent or 'generating' }
         this.logs = [];
 
         this.init();
@@ -65,11 +65,7 @@ class IDS2PSETApp {
      * Настройка кнопок
      */
     setupButtons() {
-        const generateBtn = document.getElementById('generate-btn');
-        const downloadBtn = document.getElementById('download-btn');
-
-        generateBtn?.addEventListener('click', () => this.generate());
-        downloadBtn?.addEventListener('click', () => this.download());
+        // Кнопки генерации/скачивания теперь внутри каждого file-item
     }
 
     /**
@@ -100,17 +96,14 @@ class IDS2PSETApp {
             this.renderFilesList();
         }
 
-        // Проверяем есть ли PSet без regex
+        // Показываем/скрываем preview-section с PSet
         const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
 
         if (hasValidPSets) {
             this.renderPSetColumns();
             document.getElementById('preview-section').classList.remove('hidden');
-            document.getElementById('generate-btn').disabled = false;
         } else {
-            // Если все PSet с regex, скрываем preview-section
             document.getElementById('preview-section').classList.add('hidden');
-            document.getElementById('generate-btn').disabled = true;
         }
     }
 
@@ -166,6 +159,11 @@ class IDS2PSETApp {
                 }
             }
 
+            // Статус генерации для этого IDS
+            const ifcStatus = this.ifcByIDS[name];
+            const isGenerating = ifcStatus === 'generating';
+            const isGenerated = ifcStatus && ifcStatus !== 'generating';
+
             item.innerHTML = `
                 <div class="file-item__content">
                     <div class="file-item__header">
@@ -174,6 +172,18 @@ class IDS2PSETApp {
                     </div>
                     ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
                     ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
+
+                    ${validPSetCount > 0 ? `
+                    <div class="file-item__ifc">
+                        ${isGenerating
+                            ? '<div class="file-item__ifc-status">🔄 Генерация...</div>'
+                            : isGenerated
+                                ? `<div class="file-item__ifc-status">✅ Готово</div>
+                                   <button class="file-item__ifc-download" data-file="${name}">⬇ Скачать IFC</button>`
+                                : `<button class="file-item__ifc-generate" data-file="${name}" ${validPSetCount === 0 ? 'disabled' : ''}>Сгенерировать IFC</button>`
+                        }
+                    </div>
+                    ` : ''}
                 </div>
             `;
             container.appendChild(item);
@@ -184,6 +194,7 @@ class IDS2PSETApp {
             btn.addEventListener('click', (e) => {
                 const name = e.target.dataset.file;
                 this.files.delete(name);
+                delete this.ifcByIDS[name];
 
                 // Удаляем PSet из этого IDS
                 const psetsToRemove = [];
@@ -203,17 +214,22 @@ class IDS2PSETApp {
 
                 this.renderFilesList();
                 this.renderPSetColumns();
+            });
+        });
 
-                // Проверяем есть ли PSet без regex
-                const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+        // Обработчики генерации для каждого IDS
+        container.querySelectorAll('.file-item__ifc-generate').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.target.dataset.file;
+                this.generateIFCForIDS(name);
+            });
+        });
 
-                if (!hasValidPSets) {
-                    document.getElementById('preview-section').classList.add('hidden');
-                    document.getElementById('result-section').classList.add('hidden');
-                    document.getElementById('generate-btn').disabled = true;
-                } else {
-                    document.getElementById('generate-btn').disabled = false;
-                }
+        // Обработчики скачивания для каждого IDS
+        container.querySelectorAll('.file-item__ifc-download').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.target.dataset.file;
+                this.downloadIFCForIDS(name);
             });
         });
     }
@@ -323,39 +339,64 @@ class IDS2PSETApp {
     }
 
     /**
-     * Генерация IFC
+     * Генерация IFC для конкретного IDS файла
      */
-    async generate() {
+    async generateIFCForIDS(idsName) {
+        // Получаем PSet только для этого IDS
         const selectedPSets = {};
-        for (const name of this.selectedPSetNames) {
-            selectedPSets[name] = this.psets[name];
+        let selectedCount = 0;
+        for (const [name, pset] of Object.entries(this.psets)) {
+            if (pset.source === idsName && !pset.is_pattern) {
+                selectedPSets[name] = pset;
+                selectedCount++;
+            }
         }
 
-        if (Object.keys(selectedPSets).length === 0) {
-            alert('Выберите хотя бы один PSet');
+        if (selectedCount === 0) {
+            alert('Нет PSet для генерации');
             return;
         }
 
-        document.getElementById('progress-section').classList.remove('hidden');
-        this.log('🔄 Генерация IFC...');
+        // Устанавливаем статус генерации
+        this.ifcByIDS[idsName] = 'generating';
+        this.renderFilesList();
 
         try {
-            // Получение имени первого файла
-            const firstName = this.files.keys().next().value;
-            const baseName = firstName.replace('.ids', '');
-
-            this.ifcContent = await window.pyodideBridge.generateIFC(
+            const ifcContent = await window.pyodideBridge.generateIFC(
                 selectedPSets,
-                Array.from(this.selectedPSetNames)
+                Object.keys(selectedPSets)
             );
 
-            this.log('✓ IFC сгенерирован');
-            this.showResult(baseName + '_PSet_Library.ifc');
+            // Сохраняем результат
+            this.ifcByIDS[idsName] = ifcContent;
+            this.log(`✓ IFC сгенерирован для ${idsName}`);
         } catch (error) {
-            this.log(`✗ Ошибка генерации: ${error.message}`);
+            this.ifcByIDS[idsName] = null;
+            this.log(`✗ Ошибка генерации ${idsName}: ${error.message}`);
         }
 
-        document.getElementById('progress-section').classList.add('hidden');
+        this.renderFilesList();
+    }
+
+    /**
+     * Скачивание IFC для конкретного IDS файла
+     */
+    downloadIFCForIDS(idsName) {
+        const ifcContent = this.ifcByIDS[idsName];
+        if (!ifcContent) return;
+
+        const baseName = idsName.replace('.ids', '').replace('.xml', '');
+        const fileName = baseName + '_PSet_Library.ifc';
+        const blob = new Blob([ifcContent], { type: 'application/x-step' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.log(`⬇ Скачан: ${fileName}`);
     }
 
     /**
