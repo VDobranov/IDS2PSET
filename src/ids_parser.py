@@ -52,10 +52,8 @@ def _extract_values(elem, ns, xs_ns):
     # Try simpleValue first
     simple_value = elem.find("ids:simpleValue", ns)
     if simple_value is not None and simple_value.text:
-        # Проверяем содержит ли simpleValue regex-символы
-        # Это может указывать на потенциально некорректный IDS
-        has_regex = bool(_REGEX_CHARS.search(simple_value.text))
-        return ([simple_value.text], has_regex)
+        # simpleValue всегда валиден для IFC, даже если содержит regex-символы
+        return ([simple_value.text], False)
 
     # Try xs:restriction with xs:enumeration
     restriction = elem.find("xs:restriction", xs_ns)
@@ -162,7 +160,9 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             if not pset_values:
                 continue
 
-            pset_name = pset_values[0]  # Use first value
+            pset_name = pset_values[0]
+            # simple_value_pattern: имя PSet содержит regex-символы
+            pset_has_simple_value_regex = bool(_REGEX_CHARS.search(pset_name))
 
             # Extract base name
             base_name_elem = prop.find("ids:baseName", ns)
@@ -173,7 +173,9 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             if not base_name_list:
                 continue
 
-            base_name = base_name_list[0]  # Use first value
+            base_name = base_name_list[0]
+            # simple_value_pattern: имя свойства содержит regex-символы
+            prop_has_simple_value_regex = bool(_REGEX_CHARS.search(base_name))
 
             # Get attributes
             data_type = prop.get("dataType", "IFCTEXT")
@@ -202,8 +204,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 enum_values=enum_values,
                 template_type="P_SINGLEVALUE",
                 is_pattern=base_is_pattern,
-                simple_value_pattern=base_is_pattern
-                and bool(_REGEX_CHARS.search(base_name)),
+                simple_value_pattern=prop_has_simple_value_regex,
             )
 
             # Group by PSet name
@@ -211,8 +212,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 psets[pset_name] = PSetGroup(
                     name=pset_name,
                     is_pattern=pset_is_pattern,
-                    simple_value_pattern=pset_is_pattern
-                    and bool(_REGEX_CHARS.search(pset_name)),
+                    simple_value_pattern=pset_has_simple_value_regex,
                 )
 
             # Add property if not already present
