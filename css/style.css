@@ -269,18 +269,22 @@ body {
     background: var(--content-bg);
     padding: var(--spacing-lg);
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* PSet КОНТЕЙНЕР ==================== */
 .pset-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    display: flex;
     gap: var(--spacing-lg);
+    overflow-x: auto;
     padding-bottom: var(--spacing-md);
+    flex-wrap: nowrap;
 }
 
 .pset-column {
-    min-width: 0;
+    min-width: 500px;
+    max-width: 100%;
+    flex-shrink: 0;
     background: #fff;
     /* border-radius: 8px; */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
