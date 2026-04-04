@@ -335,20 +335,18 @@ class IDS2PSETApp {
         prevBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
             if (container.scrollLeft < colWidth / 2) {
-                // Первая колонка → переходим к последней
                 container.scrollLeft = colWidth * (total - 1);
             } else {
-                container.scrollBy({ left: -colWidth, behavior: 'smooth' });
+                container.scrollLeft -= colWidth;
             }
         };
 
         nextBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
             if (container.scrollLeft >= colWidth * (total - 1) - 1) {
-                // Последняя колонка → переходим к первой
                 container.scrollLeft = 0;
             } else {
-                container.scrollBy({ left: colWidth, behavior: 'smooth' });
+                container.scrollLeft += colWidth;
             }
         };
 
