@@ -58,9 +58,9 @@ body {
 }
 
 .sidebar__header h1 {
-    font-size: 1.5em;
+    font-size: 1.75em;
     font-weight: 600;
-    line-height: 28px;
+    line-height: 24px;
     margin-bottom: var(--spacing-xs);
 }
 
