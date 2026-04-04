@@ -31,6 +31,7 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install ifcopenshell
 
       - name: Run pytest with coverage and IFC validation
         run: |
@@ -70,6 +71,7 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install ifcopenshell
 
       - name: Run full test suite with IFC validation
         run: |
