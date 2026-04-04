@@ -285,7 +285,7 @@ body {
     background: var(--content-text);
     color: var(--content-bg);
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     width: 44px;
     height: 44px;
     font-size: 20px;
@@ -295,13 +295,11 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     transition: background 0.15s;
 }
 
 .pset-nav-btn:hover:not(:disabled) {
     background: #333;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .pset-nav-btn:active:not(:disabled) {
@@ -311,7 +309,6 @@ body {
 .pset-nav-btn:disabled {
     opacity: 0.2;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
 .pset-nav-info {
@@ -323,7 +320,7 @@ body {
 
 .pset-container {
     display: flex;
-    gap: var(--spacing-lg);
+    gap: 0;
     overflow-x: auto;
     scroll-behavior: smooth;
     padding-bottom: var(--spacing-md);
@@ -334,7 +331,7 @@ body {
 }
 
 .pset-column {
-    min-width: 100%;
+    width: 100%;
     flex-shrink: 0;
     background: #fff;
     /* border-radius: 8px; */

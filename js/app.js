@@ -199,11 +199,12 @@ class IDS2PSETApp {
                 this.renderFilesList();
                 this.renderPSetColumns();
 
-                // Обновляем состояние кнопки генерации
+                // Обновляем состояние кнопки генерации и видимость секции
                 const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
                     Object.values(psets).some(pset => !pset.is_pattern)
                 );
                 document.getElementById('generate-btn').disabled = !hasValidPSets;
+                document.getElementById('preview-section').classList.toggle('hidden', !hasValidPSets);
             });
         });
 
@@ -239,6 +240,21 @@ class IDS2PSETApp {
     renderPSetColumns() {
         const container = document.getElementById('pset-container');
         container.innerHTML = '';
+
+        // Считаем количество IDS с валидными PSet
+        let validIDSCount = 0;
+        for (const [source, psets] of Object.entries(this.psetsByIDS)) {
+            const hasValid = Object.values(psets).some(pset => !pset.is_pattern);
+            if (hasValid) validIDSCount++;
+        }
+
+        // Если нет IDS с валидными PSet, скрываем секцию
+        if (validIDSCount === 0) {
+            document.getElementById('preview-section').classList.add('hidden');
+            document.getElementById('pset-nav-prev').classList.add('hidden');
+            document.getElementById('pset-nav-next').classList.add('hidden');
+            return;
+        }
 
         // Создаём колонку только для IDS с валидными PSet
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
@@ -291,7 +307,6 @@ class IDS2PSETApp {
 
         const columns = container.querySelectorAll('.pset-column');
         const total = columns.length;
-        const gap = 24; // --spacing-lg из CSS
 
         if (total <= 1) {
             prevBtn.classList.add('hidden');
@@ -308,7 +323,7 @@ class IDS2PSETApp {
         const update = () => {
             const colWidth = columns[0]?.clientWidth || 0;
             const scrollLeft = container.scrollLeft;
-            const current = Math.round(scrollLeft / (colWidth + gap)) + 1;
+            const current = Math.round(scrollLeft / colWidth) + 1;
             prevBtn.disabled = current <= 1;
             nextBtn.disabled = current >= total;
             const title = columns[current - 1]?.querySelector('.pset-column__title')?.textContent || '';
@@ -317,12 +332,12 @@ class IDS2PSETApp {
 
         prevBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: -(colWidth + gap), behavior: 'smooth' });
+            container.scrollBy({ left: -colWidth, behavior: 'smooth' });
         };
 
         nextBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: colWidth + gap, behavior: 'smooth' });
+            container.scrollBy({ left: colWidth, behavior: 'smooth' });
         };
 
         container.addEventListener('scroll', update, { passive: true });
