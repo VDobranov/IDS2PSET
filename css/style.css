@@ -79,6 +79,10 @@ body {
     min-height: 0;
 }
 
+h2 {
+    margin-bottom: var(--spacing-md);
+}
+
 .sidebar__title {
     font-size: 0.75em;
     font-weight: 600;
