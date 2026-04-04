@@ -267,26 +267,28 @@ body {
     flex-grow: 1;
     width: 61.8%;
     background: var(--content-bg);
-    padding: var(--spacing-lg) var(--spacing-lg) 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* PSet КОНТЕЙНЕР ==================== */
 .pset-scroll-top {
-    overflow-x: scroll;
+    overflow-x: auto;
     overflow-y: hidden;
     height: 18px;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--sidebar-border, #e0e0e0);
+    border-radius: 4px;
 }
 
 .pset-scroll-top__inner {
     height: 1px;
+    min-width: 100%;
 }
 
 .pset-scroll-wrapper {
-    overflow-x: auto;
+    overflow-x: visible;
     overflow-y: visible;
 }
 
