@@ -3,10 +3,12 @@
  */
 
 // Pyodide CDN URL
-// Стабильная версия v0.27.2 (Python 3.12) - не совместима с wheel
-// Dev версия (Python 3.13) - совместима с wheel ifcopenshell
+// v0.27.2 — Python 3.12 (не совместим с wheel)
+// v0.29.3 — Python 3.13 + pyodide_2025_0 (совместим с wheel ifcopenshell)
+// dev — Python 3.14+ (не совместим)
 // const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/';
-const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/dev/full/';
+const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.29.3/full/';
+// const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/dev/full/';
 
 class PyodideBridge {
     constructor() {
@@ -60,9 +62,8 @@ class PyodideBridge {
         // Установка ifcopenshell из CDN (только если нужен)
         if (needIFCOpenShell && !this.ifcOpenshellLoaded) {
             try {
-                // Используем micropip с force reinstall чтобы обойти проверку платформы
                 const wheelUrl = 'https://cdn.jsdelivr.net/gh/VDobranov/IDS2PSET@main/wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
-                await micropip.install(wheelUrl, { force_reinstall: true, keep_going: true });
+                await micropip.install(wheelUrl);
                 this.ifcOpenshellLoaded = true;
             } catch (e) {
                 console.error('Ошибка установки ifcopenshell:', e);
