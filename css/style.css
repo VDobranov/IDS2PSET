@@ -267,16 +267,32 @@ body {
     flex-grow: 1;
     width: 61.8%;
     background: var(--content-bg);
-    padding: var(--spacing-lg);
-    overflow-y: auto;
+    padding: var(--spacing-lg) var(--spacing-lg) 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* PSet КОНТЕЙНЕР ==================== */
+.pset-scroll-top {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    height: 18px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.pset-scroll-top__inner {
+    height: 1px;
+}
+
+.pset-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
 .pset-container {
     display: flex;
     gap: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    overflow-x: scroll;
     min-width: 0;
 }
 

@@ -264,6 +264,9 @@ class IDS2PSETApp {
             container.appendChild(column);
         }
 
+        // Синхронизированный скролл сверху
+        this.setupTopScroll(container);
+
         // Обработчики чекбоксов
         container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', (e) => {
@@ -275,6 +278,38 @@ class IDS2PSETApp {
                 }
             });
         });
+    }
+
+    /**
+     * Настройка синхронизированного скролла сверху
+     */
+    setupTopScroll(container) {
+        const scrollTop = document.getElementById('pset-scroll-top');
+        if (!scrollTop) return;
+
+        const update = () => {
+            const needsScroll = container.scrollWidth > container.clientWidth;
+            if (needsScroll) {
+                scrollTop.classList.remove('hidden');
+                // Устанавливаем ширину внутреннего контента
+                const inner = scrollTop.querySelector('.pset-scroll-top__inner');
+                if (inner) {
+                    inner.style.width = container.scrollWidth + 'px';
+                }
+                scrollTop.scrollLeft = container.scrollLeft;
+            } else {
+                scrollTop.classList.add('hidden');
+            }
+        };
+
+        scrollTop.onscroll = () => {
+            container.scrollLeft = scrollTop.scrollLeft;
+        };
+        container.onscroll = () => {
+            scrollTop.scrollLeft = container.scrollLeft;
+        };
+
+        requestAnimationFrame(update);
     }
 
     /**
