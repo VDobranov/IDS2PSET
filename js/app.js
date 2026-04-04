@@ -179,7 +179,7 @@ class IDS2PSETApp {
                     ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
                     ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
                     ${simpleValuePatternCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
-                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
+                    ${allRegex && simpleValuePatternCount === 0 ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
