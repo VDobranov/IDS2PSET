@@ -156,11 +156,13 @@ class IDS2PSETApp {
             let patternPSetCount = 0;
             let patternPropCount = 0;
             let validPSetCount = 0;
+            let simpleValuePatternCount = 0; // regex в simpleValue (потенциально некорректный IDS)
             const idsPSets = this.psetsByIDS[name] || {};
             for (const [psetName, pset] of Object.entries(idsPSets)) {
                 if (pset.is_pattern) patternPSetCount++;
                 else validPSetCount++;
                 patternPropCount += pset.properties.filter(p => p.is_pattern).length;
+                if (pset.simple_value_pattern) simpleValuePatternCount++;
             }
 
             // Статус генерации для этого IDS
@@ -176,6 +178,7 @@ class IDS2PSETApp {
                     </div>
                     ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
                     ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${simpleValuePatternCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">⚠️ Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
                     ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `

@@ -1,8 +1,12 @@
 """IDS Parser module for extracting PSet requirements."""
 
+import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List
 from dataclasses import dataclass, field
+
+# Regex-символы, указывающие что simpleValue может содержать регулярное выражение
+_REGEX_CHARS = re.compile(r"[.\*\+\?\[\]\(\)\{\}\|\^\$]")
 
 
 @dataclass
@@ -17,6 +21,9 @@ class PropertyRequirement:
     enum_values: List[str] = field(default_factory=list)
     template_type: str = "P_SINGLEVALUE"
     is_pattern: bool = False  # True если имя свойства задано regex
+    simple_value_pattern: bool = (
+        False  # True если regex в simpleValue (потенциально некорректный IDS)
+    )
 
 
 @dataclass
@@ -27,6 +34,9 @@ class PSetGroup:
     properties: List[PropertyRequirement] = field(default_factory=list)
     applicable_entities: List[str] = field(default_factory=list)
     is_pattern: bool = False  # True если имя PSet задано regex
+    simple_value_pattern: bool = (
+        False  # True если regex в simpleValue (потенциально некорректный IDS)
+    )
 
 
 def _extract_values(elem, ns, xs_ns):
@@ -42,7 +52,10 @@ def _extract_values(elem, ns, xs_ns):
     # Try simpleValue first
     simple_value = elem.find("ids:simpleValue", ns)
     if simple_value is not None and simple_value.text:
-        return ([simple_value.text], False)
+        # Проверяем содержит ли simpleValue regex-символы
+        # Это может указывать на потенциально некорректный IDS
+        has_regex = bool(_REGEX_CHARS.search(simple_value.text))
+        return ([simple_value.text], has_regex)
 
     # Try xs:restriction with xs:enumeration
     restriction = elem.find("xs:restriction", xs_ns)
@@ -189,11 +202,18 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 enum_values=enum_values,
                 template_type="P_SINGLEVALUE",
                 is_pattern=base_is_pattern,
+                simple_value_pattern=base_is_pattern
+                and bool(_REGEX_CHARS.search(base_name)),
             )
 
             # Group by PSet name
             if pset_name not in psets:
-                psets[pset_name] = PSetGroup(name=pset_name, is_pattern=pset_is_pattern)
+                psets[pset_name] = PSetGroup(
+                    name=pset_name,
+                    is_pattern=pset_is_pattern,
+                    simple_value_pattern=pset_is_pattern
+                    and bool(_REGEX_CHARS.search(pset_name)),
+                )
 
             # Add property if not already present
             existing_names = [p.name for p in psets[pset_name].properties]

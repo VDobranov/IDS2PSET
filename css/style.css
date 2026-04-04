@@ -223,6 +223,12 @@ h2 {
     font-weight: 500;
 }
 
+.file-item__warning--ids-issue {
+    color: #d97706;
+    font-style: italic;
+    font-size: 0.8em;
+}
+
 /* IFC блок внутри file-item */
 .file-item__ifc {
     margin-top: var(--spacing-sm);

@@ -76,7 +76,7 @@ class PyodideBridge {
             this.pyodide.FS.mkdir('/src');
 
             // Загрузка ids_parser.py
-            const idsParserResponse = await fetch('./src/ids_parser.py');
+            const idsParserResponse = await fetch('./src/ids_parser.py?v=2');
             const idsParserContent = await idsParserResponse.text();
             this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
 
@@ -130,12 +130,14 @@ class PyodideBridge {
                             'cardinality': p.cardinality,
                             'description': p.description,
                             'enum_values': p.enum_values,
-                            'is_pattern': p.is_pattern
+                            'is_pattern': p.is_pattern,
+                            'simple_value_pattern': p.simple_value_pattern
                         }
                         for p in pset.properties
                     ],
                     'applicable_entities': pset.applicable_entities,
-                    'is_pattern': pset.is_pattern
+                    'is_pattern': pset.is_pattern,
+                    'simple_value_pattern': pset.simple_value_pattern
                 }
 
             json.dumps(result)
