@@ -52,8 +52,11 @@ class PSetGenerator:
     }
 
     def __init__(self):
-        if ifcopenshell is None:
-            raise ImportError("ifcopenshell is required. Install it first.")
+        # TODO: ifcopenshell wheel собран для Python 3.13 + pyodide_2025_0
+        # Dev Pyodide обновился до Python 3.14 + emscripten-5.0.3
+        # Нужно пересобрать wheel или зафиксировать версию Pyodide
+        # if ifcopenshell is None:
+        #     raise ImportError("ifcopenshell is required. Install it first.")
         self.file = None
         self.library = None
         self.templates = []

@@ -2,6 +2,12 @@
  * Pyodide Bridge - связующий модуль между JS и Python
  */
 
+// Pyodide CDN URL
+// Стабильная версия v0.27.2 (Python 3.12) - не совместима с wheel
+// Dev версия (Python 3.13) - совместима с wheel ifcopenshell
+// const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/';
+const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/dev/full/';
+
 class PyodideBridge {
     constructor() {
         this.pyodide = null;
@@ -18,9 +24,9 @@ class PyodideBridge {
             return this.pyodide;
         }
 
-        // Загрузка Pyodide (dev версия)
+        // Загрузка Pyodide
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js';
+        script.src = `${PYODIDE_CDN}pyodide.js`;
         await new Promise((resolve, reject) => {
             script.onload = resolve;
             script.onerror = reject;
@@ -29,7 +35,7 @@ class PyodideBridge {
 
         // Инициализация
         this.pyodide = await loadPyodide({
-            indexURL: 'https://cdn.jsdelivr.net/pyodide/dev/full/'
+            indexURL: PYODIDE_CDN
         });
 
         this.initialized = true;
@@ -54,11 +60,9 @@ class PyodideBridge {
         // Установка ifcopenshell из CDN (только если нужен)
         if (needIFCOpenShell && !this.ifcOpenshellLoaded) {
             try {
-                // Используем jsdelivr CDN для CORS доступа
+                // Используем micropip с force reinstall чтобы обойти проверку платформы
                 const wheelUrl = 'https://cdn.jsdelivr.net/gh/VDobranov/IDS2PSET@main/wheels/ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl';
-
-                // Установка через micropip с URL
-                await micropip.install(wheelUrl);
+                await micropip.install(wheelUrl, { force_reinstall: true, keep_going: true });
                 this.ifcOpenshellLoaded = true;
             } catch (e) {
                 console.error('Ошибка установки ifcopenshell:', e);
