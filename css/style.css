@@ -269,16 +269,15 @@ body {
     background: var(--content-bg);
     padding: var(--spacing-lg);
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
 }
 
 /* PSet КОНТЕЙНЕР ==================== */
 .pset-container {
     display: flex;
     gap: var(--spacing-lg);
-    overflow-x: auto;
     padding-bottom: var(--spacing-md);
-    flex-wrap: nowrap;
+    min-width: max-content;
 }
 
 .pset-column {
