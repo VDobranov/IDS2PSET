@@ -291,6 +291,7 @@ class IDS2PSETApp {
 
         const columns = container.querySelectorAll('.pset-column');
         const total = columns.length;
+        const gap = 24; // --spacing-lg из CSS
 
         if (total <= 1) {
             prevBtn.classList.add('hidden');
@@ -307,7 +308,7 @@ class IDS2PSETApp {
         const update = () => {
             const colWidth = columns[0]?.clientWidth || 0;
             const scrollLeft = container.scrollLeft;
-            const current = Math.round(scrollLeft / (colWidth + 32)) + 1; // 32 = gap
+            const current = Math.round(scrollLeft / (colWidth + gap)) + 1;
             prevBtn.disabled = current <= 1;
             nextBtn.disabled = current >= total;
             const title = columns[current - 1]?.querySelector('.pset-column__title')?.textContent || '';
@@ -316,12 +317,12 @@ class IDS2PSETApp {
 
         prevBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: -(colWidth + 32), behavior: 'smooth' });
+            container.scrollBy({ left: -(colWidth + gap), behavior: 'smooth' });
         };
 
         nextBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: colWidth + 32, behavior: 'smooth' });
+            container.scrollBy({ left: colWidth + gap, behavior: 'smooth' });
         };
 
         container.addEventListener('scroll', update, { passive: true });
