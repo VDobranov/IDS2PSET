@@ -274,28 +274,21 @@ body {
 
 /* PSet КОНТЕЙНЕР ==================== */
 .pset-scroll-top {
-    overflow-x: auto;
+    overflow-x: scroll;
     overflow-y: hidden;
     height: 18px;
     margin-bottom: var(--spacing-md);
-    border: 1px solid var(--sidebar-border, #e0e0e0);
-    border-radius: 4px;
-}
-
-.pset-scroll-top__inner {
-    height: 1px;
-    min-width: 100%;
-}
-
-.pset-scroll-wrapper {
-    overflow-x: visible;
-    overflow-y: visible;
 }
 
 .pset-container {
     display: flex;
     gap: var(--spacing-lg);
-    min-width: 0;
+    overflow-x: auto;
+    width: max-content;
+}
+
+.pset-container::-webkit-scrollbar {
+    height: 10px;
 }
 
 .pset-column {

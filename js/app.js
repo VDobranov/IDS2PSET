@@ -287,15 +287,17 @@ class IDS2PSETApp {
         const scrollTop = document.getElementById('pset-scroll-top');
         if (!scrollTop) return;
 
-        const inner = scrollTop.querySelector('.pset-scroll-top__inner');
-
         const update = () => {
             const needsScroll = container.scrollWidth > container.clientWidth;
             if (needsScroll) {
                 scrollTop.classList.remove('hidden');
-                if (inner) {
-                    inner.style.width = container.scrollWidth + 'px';
-                }
+                // Устанавливаем ширину контента равной scrollWidth основного контейнера
+                scrollTop.style.width = '100%';
+                const inner = document.createElement('div');
+                inner.style.width = container.scrollWidth + 'px';
+                inner.style.height = '1px';
+                scrollTop.innerHTML = '';
+                scrollTop.appendChild(inner);
             } else {
                 scrollTop.classList.add('hidden');
             }
@@ -304,20 +306,16 @@ class IDS2PSETApp {
         // Верхний скролл управляет основным
         scrollTop.addEventListener('scroll', () => {
             container.scrollLeft = scrollTop.scrollLeft;
-        });
+        }, { passive: true });
 
         // Основной контейнер управляет верхним
         container.addEventListener('scroll', () => {
             scrollTop.scrollLeft = container.scrollLeft;
-        });
-
-        // Следим за изменениями DOM
-        const observer = new MutationObserver(() => {
-            requestAnimationFrame(update);
-        });
-        observer.observe(container, { childList: true, subtree: true });
+        }, { passive: true });
 
         requestAnimationFrame(update);
+        // Обновляем при изменении размера окна
+        window.addEventListener('resize', () => requestAnimationFrame(update));
     }
 
     /**
