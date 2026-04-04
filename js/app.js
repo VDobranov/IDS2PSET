@@ -110,23 +110,22 @@ class IDS2PSETApp {
             this.renderFilesList();
         }
 
-        // Показываем preview-section если есть PSet
-        const hasAnyPSets = Object.values(this.psetsByIDS).some(psets =>
-            Object.keys(psets).length > 0
-        );
-        // Блокировка ТОЛЬКО при жёстком regex (xs:pattern)
-        const allHardRegex = Object.values(this.psetsByIDS).every(psets =>
-            Object.values(psets).every(pset => pset.is_pattern)
+        // Показываем preview-section только если есть валидные PSet
+        const hasAnyValidPSets = Object.values(this.psetsByIDS).some(psets =>
+            Object.values(psets).some(
+                pset => !pset.is_pattern && !pset.simple_value_pattern
+            )
         );
         const generateBtn = document.getElementById('generate-btn');
 
-        if (hasAnyPSets) {
+        if (hasAnyValidPSets) {
             this.renderPSetColumns();
             document.getElementById('preview-section').classList.remove('hidden');
         } else {
+            this.renderPSetColumns();
             document.getElementById('preview-section').classList.add('hidden');
         }
-        generateBtn.disabled = allHardRegex || !hasAnyPSets;
+        generateBtn.disabled = !hasAnyValidPSets;
     }
 
     /**
@@ -215,18 +214,24 @@ class IDS2PSETApp {
                 }
 
                 this.renderFilesList();
-                this.renderPSetColumns();
 
                 // Обновляем состояние кнопки генерации и видимость секции
-                // Блокировка ТОЛЬКО при жёстком regex
-                const allHardRegex = Object.values(this.psetsByIDS).every(psets =>
-                    Object.keys(psets).length === 0 || Object.values(psets).every(pset => pset.is_pattern)
+                const hasAnyValidPSets = Object.values(this.psetsByIDS).some(psets =>
+                    Object.values(psets).some(
+                        pset => !pset.is_pattern && !pset.simple_value_pattern
+                    )
                 );
                 const hasAnyPSets = Object.values(this.psetsByIDS).some(psets =>
                     Object.keys(psets).length > 0
                 );
-                document.getElementById('generate-btn').disabled = allHardRegex || !hasAnyPSets;
-                document.getElementById('preview-section').classList.toggle('hidden', !hasAnyPSets);
+                document.getElementById('generate-btn').disabled = !hasAnyValidPSets;
+                if (hasAnyValidPSets) {
+                    this.renderPSetColumns();
+                    document.getElementById('preview-section').classList.remove('hidden');
+                } else {
+                    this.renderPSetColumns();
+                    document.getElementById('preview-section').classList.toggle('hidden', !hasAnyPSets);
+                }
             });
         });
 
@@ -267,8 +272,9 @@ class IDS2PSETApp {
 
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
             const psetEntries = Object.entries(psets);
+            // Колонка только для PSet без жёсткого regex
             const validPSets = psetEntries.filter(
-                ([name, pset]) => !pset.is_pattern
+                ([name, pset]) => !pset.is_pattern && !pset.simple_value_pattern
             );
 
             // Пропускаем IDS без валидных PSet — не создаём пустую колонку
@@ -432,9 +438,9 @@ class IDS2PSETApp {
         let selectedCount = 0;
         for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
             for (const [name, pset] of Object.entries(psets)) {
-                // Пропускаем ТОЛЬКО жёсткий regex (xs:pattern)
-                if (pset.is_pattern) continue;
-                // Передаём PSet с валидными свойствами (не жёсткий regex)
+                // Пропускаем PSet с любым regex
+                if (pset.is_pattern || pset.simple_value_pattern) continue;
+                // Передаём PSet с валидными свойствами
                 const validProps = pset.properties.filter(p => !p.is_pattern);
                 if (validProps.length > 0) {
                     selectedPSets[name] = { ...pset, properties: validProps };
