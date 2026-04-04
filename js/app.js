@@ -426,8 +426,10 @@ class IDS2PSETApp {
         let selectedCount = 0;
         for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
             for (const [name, pset] of Object.entries(psets)) {
-                if (!pset.is_pattern) {
-                    selectedPSets[name] = pset;
+                // Передаём PSet только с валидными свойствами
+                const validProps = pset.properties.filter(p => !p.is_pattern && !p.simple_value_pattern);
+                if (validProps.length > 0) {
+                    selectedPSets[name] = { ...pset, properties: validProps };
                     selectedCount++;
                 }
             }
