@@ -30,6 +30,15 @@ node --test tests/test.js
 npm test  # или ./run_tests.sh
 ```
 
+## Архитектура
+
+Бессерверное SPA, работающее полностью в браузере:
+- **Pyodide v0.29.3** — Python 3.13 runtime через WebAssembly
+- **ifcopenshell 0.8.4** — создание и валидация IFC4 файлов
+- **IDS parser** — встроенный парсинг IDS XML с поддержкой xs:pattern, xs:enumeration
+
+Каждый загруженный IDS генерирует свой IFC файл независимо от других.
+
 ## Структура проекта
 
 ```

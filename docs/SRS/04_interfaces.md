@@ -47,15 +47,28 @@
 ## 4.2 Программные интерфейсы
 
 ### API-1: Pyodide
-**Источник:** `https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js`
+**Источник:** `https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.js`
+
+**Версия:** v0.29.3 (Python 3.13)
 
 **Назначение:** Python runtime в браузере
 
 **Использование:**
-- Загрузка через `<script src="https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js">`
-- Инициализация: `loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/dev/full/' })`
+- Загрузка через `<script src="https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.js">`
+- Инициализация: `loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.29.3/full/' })`
 - Установка пакетов: `micropip.install()`
-- Локальные `.whl` файлы: `micropip.install('./wheels/package.whl')`
+
+**Почему v0.29.3:**
+- v0.27.2 (Python 3.12) — не совместим с wheel ifcopenshell
+- **v0.29.3 (Python 3.13, pyodide_2025_0)** — совместим с `ifcopenshell-0.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl`
+- dev/full (Python 3.14+) — не совместим с wheel
+
+Закомментированные альтернативы в `pyodide-bridge.js`:
+```js
+// const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/';
+const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.29.3/full/';
+// const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/dev/full/';
+```
 
 **Ссылки:** [[05_constraints](05_constraints.md#TECH-3)]
 

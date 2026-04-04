@@ -30,9 +30,12 @@
 ## 5.2 Зависимости
 | Компонент | Версия | Назначение |
 |-----------|--------|------------|
-| Pyodide | latest | Python runtime |
-| ifcopenshell | latest | IFC API |
-| IDS parser | TBD | Парсинг IDS XML |
+| Pyodide | v0.29.3 | Python 3.13 runtime (совместим с ifcopenshell wheel) |
+| ifcopenshell | 0.8.4 (cp313, pyodide_2025_0) | IFC API |
+| IDS parser | встроенный | Парсинг IDS XML |
+
+**Важно:** Версия Pyodide зафиксирована на v0.29.3 из-за совместимости wheel ifcopenshell.
+Использование `dev` версии (Python 3.14+) или v0.27.2 (Python 3.12) приведёт к ошибке установки.
 
 ---
 
