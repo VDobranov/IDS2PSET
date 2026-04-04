@@ -146,7 +146,7 @@ class TestParseIdsFile:
         pset = result["CommonPSet"]
 
         # Should have entities from both specifications
-        assert "IFCBEAM" in pset.applicable_entities
+        assert "IFCWALL" in pset.applicable_entities
         assert "IFCSLAB" in pset.applicable_entities
 
     def test_parse_empty_requirements(self):

@@ -81,7 +81,7 @@ class IFCValidator:
 
         return result
 
-    def _validate_structure(self, f: ifcopenshell.file) -> None:
+    def _validate_structure(self, f: "ifcopenshell.file") -> None:
         """Validate basic IFC structure."""
         # Check for IfcProjectLibrary
         libraries = f.by_type("IfcProjectLibrary")
@@ -98,7 +98,7 @@ class IFCValidator:
         if not declares:
             self.warnings.append("No IfcRelDeclares found")
 
-    def _validate_entities(self, f: ifcopenshell.file) -> None:
+    def _validate_entities(self, f: "ifcopenshell.file") -> None:
         """Validate required entities exist."""
         # Check PropertySetTemplates have required attributes
         for template in f.by_type("IfcPropertySetTemplate"):
@@ -126,7 +126,7 @@ class IFCValidator:
                     f"IfcSimplePropertyTemplate missing TemplateType: {prop.id()}"
                 )
 
-    def _run_ifcopenshell_validate(self, f: ifcopenshell.file) -> None:
+    def _run_ifcopenshell_validate(self, f: "ifcopenshell.file") -> None:
         """Run ifcopenshell.validate module checks."""
         try:
             # Use ifcopenshell's built-in validation if available
