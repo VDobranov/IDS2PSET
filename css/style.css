@@ -53,12 +53,14 @@ body {
 
 .sidebar__header {
     padding: var(--spacing-lg);
+    text-align: center;
     /* border-bottom: 1px solid var(--sidebar-border); */
 }
 
 .sidebar__header h1 {
     font-size: 1.5em;
     font-weight: 600;
+    line-height: 28px;
     margin-bottom: var(--spacing-xs);
 }
 
