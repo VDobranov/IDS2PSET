@@ -264,8 +264,8 @@ class IDS2PSETApp {
             container.appendChild(column);
         }
 
-        // Синхронизированный скролл сверху
-        this.setupTopScroll(container);
+        // Навигация по колонкам
+        this.setupPSetNav();
 
         // Обработчики чекбоксов
         container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -281,41 +281,51 @@ class IDS2PSETApp {
     }
 
     /**
-     * Настройка синхронизированного скролла сверху
+     * Навигация по колонкам PSet
      */
-    setupTopScroll(container) {
-        const scrollTop = document.getElementById('pset-scroll-top');
-        if (!scrollTop) return;
+    setupPSetNav() {
+        const container = document.getElementById('pset-container');
+        const prevBtn = document.getElementById('pset-nav-prev');
+        const nextBtn = document.getElementById('pset-nav-next');
+        const label = document.getElementById('pset-nav-label');
+
+        const columns = container.querySelectorAll('.pset-column');
+        const total = columns.length;
+
+        if (total <= 1) {
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            if (total === 1 && columns[0]) {
+                label.textContent = columns[0].querySelector('.pset-column__title')?.textContent || '';
+            }
+            return;
+        }
+
+        prevBtn.classList.remove('hidden');
+        nextBtn.classList.remove('hidden');
 
         const update = () => {
-            const needsScroll = container.scrollWidth > container.clientWidth;
-            if (needsScroll) {
-                scrollTop.classList.remove('hidden');
-                // Устанавливаем ширину контента равной scrollWidth основного контейнера
-                scrollTop.style.width = '100%';
-                const inner = document.createElement('div');
-                inner.style.width = container.scrollWidth + 'px';
-                inner.style.height = '1px';
-                scrollTop.innerHTML = '';
-                scrollTop.appendChild(inner);
-            } else {
-                scrollTop.classList.add('hidden');
-            }
+            const colWidth = columns[0]?.clientWidth || 0;
+            const scrollLeft = container.scrollLeft;
+            const current = Math.round(scrollLeft / (colWidth + 32)) + 1; // 32 = gap
+            prevBtn.disabled = current <= 1;
+            nextBtn.disabled = current >= total;
+            const title = columns[current - 1]?.querySelector('.pset-column__title')?.textContent || '';
+            label.textContent = `${current} / ${total} — ${title}`;
         };
 
-        // Верхний скролл управляет основным
-        scrollTop.addEventListener('scroll', () => {
-            container.scrollLeft = scrollTop.scrollLeft;
-        }, { passive: true });
+        prevBtn.onclick = () => {
+            const colWidth = columns[0]?.clientWidth || 0;
+            container.scrollBy({ left: -(colWidth + 32), behavior: 'smooth' });
+        };
 
-        // Основной контейнер управляет верхним
-        container.addEventListener('scroll', () => {
-            scrollTop.scrollLeft = container.scrollLeft;
-        }, { passive: true });
+        nextBtn.onclick = () => {
+            const colWidth = columns[0]?.clientWidth || 0;
+            container.scrollBy({ left: colWidth + 32, behavior: 'smooth' });
+        };
 
+        container.addEventListener('scroll', update, { passive: true });
         requestAnimationFrame(update);
-        // Обновляем при изменении размера окна
-        window.addEventListener('resize', () => requestAnimationFrame(update));
     }
 
     /**
