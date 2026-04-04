@@ -240,14 +240,17 @@ class IDS2PSETApp {
         const container = document.getElementById('pset-container');
         container.innerHTML = '';
 
-        // Создаём колонку для каждого IDS файла
+        // Создаём колонку только для IDS с валидными PSet
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
-            const column = document.createElement('div');
-            column.className = 'pset-column';
-
             const psetEntries = Object.entries(psets);
             const validPSets = psetEntries.filter(([name, pset]) => !pset.is_pattern);
+
+            // Пропускаем IDS без валидных PSet
+            if (validPSets.length === 0) continue;
+
             const patternCount = psetEntries.filter(([name, pset]) => pset.is_pattern).length;
+            const column = document.createElement('div');
+            column.className = 'pset-column';
 
             column.innerHTML = `
                 <div class="pset-column__header">
@@ -255,10 +258,7 @@ class IDS2PSETApp {
                     ${patternCount > 0 ? `<div class="pset-column__pattern-warning">${patternCount} PSet описаны через regex</div>` : ''}
                 </div>
                 <div class="pset-column__content">
-                    ${validPSets.length === 0
-                        ? '<div class="pset-column__empty">Нет PSet для генерации (все описаны через regex)</div>'
-                        : `<div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>`
-                    }
+                    <div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>
                 </div>
             `;
             container.appendChild(column);
