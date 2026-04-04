@@ -14,6 +14,19 @@ class IDS2PSETApp {
     }
 
     /**
+     * Склонение существительных: 1 файл, 2 файла, 5 файлов
+     */
+    declension(n, forms) {
+        // forms: [единственное, 2-3-4, 5+]
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        if (mod100 >= 11 && mod100 <= 19) return forms[2];
+        if (mod10 === 1) return forms[0];
+        if (mod10 >= 2 && mod10 <= 4) return forms[1];
+        return forms[2];
+    }
+
+    /**
      * Инициализация приложения
      */
     init() {
@@ -139,7 +152,7 @@ class IDS2PSETApp {
             const item = document.createElement('div');
             item.className = 'file-item';
 
-            // Подсчитываем PSet и свойства с regex patterns для этого файла
+            // Подсчитываем PSet и свойства с регулярными выражениями для этого файла
             let patternPSetCount = 0;
             let patternPropCount = 0;
             let validPSetCount = 0;
@@ -161,9 +174,9 @@ class IDS2PSETApp {
                         <span class="file-item__name">${name}</span>
                         <button class="file-item__remove" data-file="${name}">×</button>
                     </div>
-                    ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} PSet с regex</div>` : ''}
-                    ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} свойств с regex</div>` : ''}
-                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны через regex</div>' : ''}
+                    ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
+                    ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
@@ -273,7 +286,7 @@ class IDS2PSETApp {
             column.innerHTML = `
                 <div class="pset-column__header">
                     <div class="pset-column__title">${source}</div>
-                    ${patternCount > 0 ? `<div class="pset-column__pattern-warning">${patternCount} PSet описаны через regex</div>` : ''}
+                    ${patternCount > 0 ? `<div class="pset-column__pattern-warning">${patternCount} ${this.declension(patternCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
                 </div>
                 <div class="pset-column__content">
                     <div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>
@@ -383,7 +396,7 @@ class IDS2PSETApp {
                         ${name} (${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
-                ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
+                ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} ${this.declension(patternCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])} — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
                     ${pset.properties.filter(prop => !prop.is_pattern).map(prop => {
                         const measureType = prop.data_type || 'IfcText';
