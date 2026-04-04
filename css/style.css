@@ -226,8 +226,6 @@ h2 {
 /* IFC блок внутри file-item */
 .file-item__ifc {
     margin-top: var(--spacing-sm);
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid var(--sidebar-border);
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -243,7 +241,7 @@ h2 {
     background: var(--sidebar-text);
     color: var(--sidebar-bg);
     border: 1px solid var(--sidebar-text);
-    border-radius: 4px;
+    border-radius: 0;
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.85em;
     cursor: pointer;

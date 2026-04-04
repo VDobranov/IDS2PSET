@@ -315,6 +315,8 @@ class IDS2PSETApp {
             nextBtn.classList.add('hidden');
             if (total === 1 && columns[0]) {
                 label.textContent = columns[0].querySelector('.pset-column__title')?.textContent || '';
+            } else {
+                label.textContent = '';
             }
             return;
         }
@@ -323,21 +325,25 @@ class IDS2PSETApp {
         nextBtn.classList.remove('hidden');
 
         const update = () => {
-            const colWidth = columns[0]?.clientWidth || 0;
+            const colWidth = columns[0]?.clientWidth;
+            if (!colWidth) {
+                label.textContent = '';
+                return;
+            }
             const scrollLeft = container.scrollLeft;
             const current = Math.round(scrollLeft / colWidth) + 1;
-            // Кнопки всегда активны — циклическая навигация
+            const safeCurrent = Math.min(Math.max(current, 1), total);
             prevBtn.disabled = false;
             nextBtn.disabled = false;
-            const title = columns[current - 1]?.querySelector('.pset-column__title')?.textContent || '';
-            label.textContent = `${current} / ${total} — ${title}`;
+            const title = columns[safeCurrent - 1]?.querySelector('.pset-column__title')?.textContent || '';
+            label.textContent = `${safeCurrent} / ${total} — ${title}`;
         };
 
         prevBtn.onclick = () => {
-            const colWidth = columns[0]?.clientWidth || 0;
+            const colWidth = columns[0]?.clientWidth;
+            if (!colWidth) return;
             const current = Math.round(container.scrollLeft / colWidth);
             if (current === 0) {
-                // Первая колонка → последняя
                 container.scrollLeft = colWidth * (total - 1);
             } else {
                 container.scrollLeft = colWidth * (current - 1);
@@ -345,10 +351,10 @@ class IDS2PSETApp {
         };
 
         nextBtn.onclick = () => {
-            const colWidth = columns[0]?.clientWidth || 0;
+            const colWidth = columns[0]?.clientWidth;
+            if (!colWidth) return;
             const current = Math.round(container.scrollLeft / colWidth);
             if (current >= total - 1) {
-                // Последняя колонка → первая
                 container.scrollLeft = 0;
             } else {
                 container.scrollLeft = colWidth * (current + 1);
