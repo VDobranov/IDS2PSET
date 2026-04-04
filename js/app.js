@@ -158,15 +158,18 @@ class IDS2PSETApp {
             // Подсчитываем PSet и свойства с жёстким regex (xs:pattern)
             let patternPSetCount = 0;
             let patternPropCount = 0;
+            let validPSetCount = 0;
             const idsPSets = this.psetsByIDS[name] || {};
             for (const [psetName, pset] of Object.entries(idsPSets)) {
                 if (pset.is_pattern) patternPSetCount++;
+                else validPSetCount++;
                 patternPropCount += pset.properties.filter(p => p.is_pattern).length;
             }
 
             // Статус генерации для этого IDS
             const ifcStatus = this.ifcByIDS[name];
             const isGenerated = ifcStatus && ifcStatus !== 'generating';
+            const allRegex = validPSetCount === 0;
 
             item.innerHTML = `
                 <div class="file-item__content">
@@ -174,8 +177,9 @@ class IDS2PSETApp {
                         <span class="file-item__name">${name}</span>
                         <button class="file-item__remove" data-file="${name}">×</button>
                     </div>
-                    ${patternPSetCount > 0 ? `<div class="file-item__warning file-item__warning--error">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
-                    ${patternPropCount > 0 ? `<div class="file-item__warning file-item__warning--error">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
+                    ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
