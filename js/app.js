@@ -153,6 +153,7 @@ class IDS2PSETApp {
             // Статус генерации для этого IDS
             const ifcStatus = this.ifcByIDS[name];
             const isGenerated = ifcStatus && ifcStatus !== 'generating';
+            const allRegex = validPSetCount === 0;
 
             item.innerHTML = `
                 <div class="file-item__content">
@@ -162,6 +163,7 @@ class IDS2PSETApp {
                     </div>
                     ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} PSet с regex</div>` : ''}
                     ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} свойств с regex</div>` : ''}
+                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны через regex</div>' : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
@@ -332,12 +334,22 @@ class IDS2PSETApp {
 
         prevBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: -colWidth, behavior: 'smooth' });
+            if (container.scrollLeft < colWidth / 2) {
+                // Первая колонка → переходим к последней
+                container.scrollLeft = colWidth * (total - 1);
+            } else {
+                container.scrollBy({ left: -colWidth, behavior: 'smooth' });
+            }
         };
 
         nextBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            container.scrollBy({ left: colWidth, behavior: 'smooth' });
+            if (container.scrollLeft >= colWidth * (total - 1) - 1) {
+                // Последняя колонка → переходим к первой
+                container.scrollLeft = 0;
+            } else {
+                container.scrollBy({ left: colWidth, behavior: 'smooth' });
+            }
         };
 
         container.addEventListener('scroll', update, { passive: true });

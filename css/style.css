@@ -214,6 +214,11 @@ body {
     margin-top: 2px;
 }
 
+.file-item__warning--error {
+    color: var(--error-color, #e53e3e);
+    font-weight: 500;
+}
+
 /* IFC блок внутри file-item */
 .file-item__ifc {
     margin-top: var(--spacing-sm);
