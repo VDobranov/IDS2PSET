@@ -138,6 +138,8 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
     for spec in specifications:
         # Get entity from applicability with predefined type
         entities = []
+
+        # Try ids:applicability first
         applicability = spec.find("ids:applicability", ns)
         if applicability is not None:
             entity_elem = applicability.find("ids:entity", ns)
@@ -145,8 +147,15 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 entity_values = _extract_entity_with_type(entity_elem, ns, xs_ns)
                 entities.extend(entity_values)
 
-        # Get requirements
+        # Also try ids:requirements (some IDS put entity there)
         requirements = spec.find("ids:requirements", ns)
+        if requirements is not None:
+            entity_elem = requirements.find("ids:entity", ns)
+            if entity_elem is not None:
+                entity_values = _extract_entity_with_type(entity_elem, ns, xs_ns)
+                entities.extend(entity_values)
+
+        # Get requirements
         if requirements is None:
             continue
 
