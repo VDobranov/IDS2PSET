@@ -65,7 +65,8 @@ class IDS2PSETApp {
      * Настройка кнопок
      */
     setupButtons() {
-        // Кнопки генерации/скачивания теперь внутри каждого file-item
+        const generateBtn = document.getElementById('generate-btn');
+        generateBtn?.addEventListener('click', () => this.generate());
     }
 
     /**
@@ -98,12 +99,15 @@ class IDS2PSETApp {
 
         // Показываем/скрываем preview-section с PSet
         const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+        const generateBtn = document.getElementById('generate-btn');
 
         if (hasValidPSets) {
             this.renderPSetColumns();
             document.getElementById('preview-section').classList.remove('hidden');
+            generateBtn.disabled = false;
         } else {
             document.getElementById('preview-section').classList.add('hidden');
+            generateBtn.disabled = true;
         }
     }
 
@@ -161,7 +165,6 @@ class IDS2PSETApp {
 
             // Статус генерации для этого IDS
             const ifcStatus = this.ifcByIDS[name];
-            const isGenerating = ifcStatus === 'generating';
             const isGenerated = ifcStatus && ifcStatus !== 'generating';
 
             item.innerHTML = `
@@ -173,15 +176,10 @@ class IDS2PSETApp {
                     ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
                     ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
 
-                    ${validPSetCount > 0 ? `
+                    ${isGenerated ? `
                     <div class="file-item__ifc">
-                        ${isGenerating
-                            ? '<div class="file-item__ifc-status">🔄 Генерация...</div>'
-                            : isGenerated
-                                ? `<div class="file-item__ifc-status">✅ Готово</div>
-                                   <button class="file-item__ifc-download" data-file="${name}">⬇ Скачать IFC</button>`
-                                : `<button class="file-item__ifc-generate" data-file="${name}" ${validPSetCount === 0 ? 'disabled' : ''}>Сгенерировать IFC</button>`
-                        }
+                        <div class="file-item__ifc-status">✅ Готово</div>
+                        <button class="file-item__ifc-download" data-file="${name}">Скачать IFC</button>
                     </div>
                     ` : ''}
                 </div>
@@ -214,14 +212,10 @@ class IDS2PSETApp {
 
                 this.renderFilesList();
                 this.renderPSetColumns();
-            });
-        });
 
-        // Обработчики генерации для каждого IDS
-        container.querySelectorAll('.file-item__ifc-generate').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const name = e.target.dataset.file;
-                this.generateIFCForIDS(name);
+                // Обновляем состояние кнопки генерации
+                const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+                document.getElementById('generate-btn').disabled = !hasValidPSets;
             });
         });
 
@@ -339,14 +333,14 @@ class IDS2PSETApp {
     }
 
     /**
-     * Генерация IFC для конкретного IDS файла
+     * Генерация IFC для всех загруженных IDS
      */
-    async generateIFCForIDS(idsName) {
-        // Получаем PSet только для этого IDS
+    async generate() {
+        // Собираем все PSet из всех IDS
         const selectedPSets = {};
         let selectedCount = 0;
         for (const [name, pset] of Object.entries(this.psets)) {
-            if (pset.source === idsName && !pset.is_pattern) {
+            if (!pset.is_pattern) {
                 selectedPSets[name] = pset;
                 selectedCount++;
             }
@@ -357,9 +351,10 @@ class IDS2PSETApp {
             return;
         }
 
-        // Устанавливаем статус генерации
-        this.ifcByIDS[idsName] = 'generating';
-        this.renderFilesList();
+        const generateBtn = document.getElementById('generate-btn');
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Генерация...';
+        this.log('🔄 Генерация IFC...');
 
         try {
             const ifcContent = await window.pyodideBridge.generateIFC(
@@ -367,14 +362,19 @@ class IDS2PSETApp {
                 Object.keys(selectedPSets)
             );
 
-            // Сохраняем результат
-            this.ifcByIDS[idsName] = ifcContent;
-            this.log(`✓ IFC сгенерирован для ${idsName}`);
+            // Сохраняем результат для всех IDS
+            // Каждый IDS получает свой IFC (общий для всех)
+            for (const idsName of this.files.keys()) {
+                this.ifcByIDS[idsName] = ifcContent;
+            }
+
+            this.log('✓ IFC сгенерирован');
         } catch (error) {
-            this.ifcByIDS[idsName] = null;
-            this.log(`✗ Ошибка генерации ${idsName}: ${error.message}`);
+            this.log(`✗ Ошибка генерации: ${error.message}`);
         }
 
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Сгенерировать IFC';
         this.renderFilesList();
     }
 
