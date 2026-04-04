@@ -5,8 +5,24 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List
 from dataclasses import dataclass, field
 
-# Regex-символы, указывающие что simpleValue может содержать регулярное выражение
-_REGEX_CHARS = re.compile(r"[.\*\+\?\[\]\(\)\{\}\|\^\$]")
+# Regex-паттерны, указывающие на реальное регулярное выражение
+# Одиночные скобки/точки не считаем — они могут быть в обычных названиях
+_REGEX_PATTERNS = [
+    re.compile(r"\.\*"),  # .*
+    re.compile(r"\.\+"),  # .+
+    re.compile(r"\[\^?"),  # [ или [^
+    re.compile(r"\^"),  # ^
+    re.compile(r"\$"),  # $ (не в конце, но всё равно)
+    re.compile(r"\{"),  # {
+    re.compile(r"\|"),  # |
+]
+
+
+def _is_regex_like(text):
+    """Проверяет, содержит ли текст паттерны, характерные для regex."""
+    if not text:
+        return False
+    return any(p.search(text) for p in _REGEX_PATTERNS)
 
 
 @dataclass
@@ -171,7 +187,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
 
             pset_name = pset_values[0]
             # simple_value_pattern: имя PSet содержит regex-символы
-            pset_has_simple_value_regex = bool(_REGEX_CHARS.search(pset_name))
+            pset_has_simple_value_regex = _is_regex_like(pset_name)
 
             # Extract base name
             base_name_elem = prop.find("ids:baseName", ns)
@@ -184,7 +200,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
 
             base_name = base_name_list[0]
             # simple_value_pattern: имя свойства содержит regex-символы
-            prop_has_simple_value_regex = bool(_REGEX_CHARS.search(base_name))
+            prop_has_simple_value_regex = _is_regex_like(base_name)
 
             # Get attributes
             data_type = prop.get("dataType", "IFCTEXT")
