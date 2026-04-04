@@ -76,7 +76,7 @@ class PyodideBridge {
             this.pyodide.FS.mkdir('/src');
 
             // Загрузка ids_parser.py
-            const idsParserResponse = await fetch('./src/ids_parser.py?v=4');
+            const idsParserResponse = await fetch('./src/ids_parser.py?v=5');
             const idsParserContent = await idsParserResponse.text();
             this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
 

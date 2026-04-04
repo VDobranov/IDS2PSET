@@ -12,9 +12,13 @@ _REGEX_PATTERNS = [
     re.compile(r"\.\+"),  # .+
     re.compile(r"\[\^?"),  # [ или [^
     re.compile(r"\^"),  # ^
-    re.compile(r"\$"),  # $ (не в конце, но всё равно)
+    re.compile(r"\$"),  # $
     re.compile(r"\{"),  # {
     re.compile(r"\|"),  # |
+    re.compile(r"\\[dwsDWS]"),  # \d \w \s \D \W \S
+    re.compile(r"[^\s]\+"),  # X+ (квантификатор)
+    re.compile(r"[^\s]\?"),  # X? (квантификатор)
+    re.compile(r"\(\?"),  # (?: (?= и т.д.
 ]
 
 
