@@ -261,7 +261,7 @@ class IDS2PSETApp {
 
             column.innerHTML = `
                 <div class="pset-column__header">
-                    <div class="pset-column__title">📄 ${source}</div>
+                    <div class="pset-column__title">${source}</div>
                 </div>
                 <div class="pset-column__content">
                     ${validPSets.length === 0
@@ -301,7 +301,7 @@ class IDS2PSETApp {
                            ${this.selectedPSetNames.has(name) ? 'checked' : ''}
                            data-pset="${name}">
                     <label for="pset-${name}">
-                        📦 ${name} (${this.formatEntities(pset.applicable_entities)})
+                        ${name} (${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
                 ${patternCount > 0 ? `<div class="tree-node__pattern-warning">⚠️ ${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
@@ -312,7 +312,6 @@ class IDS2PSETApp {
                         return `
                         <div class="property-item">
                             <div class="property-item__header">
-                                ${this.getDataTypeIcon(prop.data_type)}
                                 ${prop.name} (${measureType}, ${templateType})
                             </div>
                             ${prop.description ? `<div class="property-item__description">${prop.description}</div>` : ''}
@@ -321,21 +320,6 @@ class IDS2PSETApp {
                 </div>
             </div>
         `;
-    }
-
-    /**
-     * Иконка типа данных
-     */
-    getDataTypeIcon(dataType) {
-        const icons = {
-            'IFCTEXT': '🔤',
-            'IFCINTEGER': '🔢',
-            'IFCREAL': '🔢',
-            'IFCBOOLEAN': '☑',
-            'IFCLENGTHMEASURE': '📏',
-            'IFCVOLUMEMEASURE': '📦'
-        };
-        return icons[dataType] || '📄';
     }
 
     /**
@@ -387,7 +371,7 @@ class IDS2PSETApp {
                 <li>Свойств: ${this.getTotalPropertiesCount()}</li>
             </ul>
         `;
-        fileInfo.textContent = `📄 Файл: ${fileName}`;
+        fileInfo.textContent = `Файл: ${fileName}`;
 
         // Сохраняем имя файла для скачивания
         this.outputFileName = fileName;
