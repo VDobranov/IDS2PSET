@@ -269,7 +269,6 @@ body {
     background: var(--content-bg);
     padding: var(--spacing-lg);
     overflow-y: auto;
-    overflow-x: auto;
 }
 
 /* PSet КОНТЕЙНЕР ==================== */
@@ -277,7 +276,8 @@ body {
     display: flex;
     gap: var(--spacing-lg);
     padding-bottom: var(--spacing-md);
-    min-width: max-content;
+    overflow-x: scroll;
+    min-width: 0;
 }
 
 .pset-column {
