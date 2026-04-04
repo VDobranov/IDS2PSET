@@ -307,17 +307,12 @@ h2 {
     transition: background 0.15s;
 }
 
-.pset-nav-btn:hover:not(:disabled) {
+.pset-nav-btn:hover {
     background: #333;
 }
 
-.pset-nav-btn:active:not(:disabled) {
+.pset-nav-btn:active {
     transform: scale(0.95);
-}
-
-.pset-nav-btn:disabled {
-    opacity: 0.2;
-    cursor: not-allowed;
 }
 
 .pset-nav-info {

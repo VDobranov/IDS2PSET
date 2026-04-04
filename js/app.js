@@ -326,27 +326,32 @@ class IDS2PSETApp {
             const colWidth = columns[0]?.clientWidth || 0;
             const scrollLeft = container.scrollLeft;
             const current = Math.round(scrollLeft / colWidth) + 1;
-            prevBtn.disabled = current <= 1;
-            nextBtn.disabled = current >= total;
+            // Кнопки всегда активны — циклическая навигация
+            prevBtn.disabled = false;
+            nextBtn.disabled = false;
             const title = columns[current - 1]?.querySelector('.pset-column__title')?.textContent || '';
             label.textContent = `${current} / ${total} — ${title}`;
         };
 
         prevBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            if (container.scrollLeft < colWidth / 2) {
+            const current = Math.round(container.scrollLeft / colWidth);
+            if (current === 0) {
+                // Первая колонка → последняя
                 container.scrollLeft = colWidth * (total - 1);
             } else {
-                container.scrollLeft -= colWidth;
+                container.scrollLeft = colWidth * (current - 1);
             }
         };
 
         nextBtn.onclick = () => {
             const colWidth = columns[0]?.clientWidth || 0;
-            if (container.scrollLeft >= colWidth * (total - 1) - 1) {
+            const current = Math.round(container.scrollLeft / colWidth);
+            if (current >= total - 1) {
+                // Последняя колонка → первая
                 container.scrollLeft = 0;
             } else {
-                container.scrollLeft += colWidth;
+                container.scrollLeft = colWidth * (current + 1);
             }
         };
 
