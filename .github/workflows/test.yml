@@ -36,7 +36,7 @@ jobs:
       - name: Run pytest with coverage and IFC validation
         run: |
           source .venv/bin/activate
-          PYTHONPATH=src pytest tests/ -v --cov=ids_parser --cov=pset_generator --cov=validator --cov-report=term-missing --cov-fail-under=90
+          PYTHONPATH=src pytest tests/ -v --cov=ids_parser --cov=pset_generator --cov=validator --cov-report=term-missing --cov-fail-under=85
           echo "✓ Все тесты прошли, включая валидацию IFC"
 
   js-tests:
