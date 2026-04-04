@@ -273,17 +273,14 @@ body {
 
 /* PSet КОНТЕЙНЕР ==================== */
 .pset-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
     gap: var(--spacing-lg);
-    overflow-x: auto;
     padding-bottom: var(--spacing-md);
-    flex-wrap: nowrap;
 }
 
 .pset-column {
-    min-width: 400px;
-    max-width: 500px;
-    flex-shrink: 0;
+    min-width: 0;
     background: #fff;
     /* border-radius: 8px; */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -303,6 +300,12 @@ body {
     font-weight: 600;
     color: var(--content-text);
     word-break: break-all;
+}
+
+.pset-column__pattern-warning {
+    font-size: 0.85em;
+    color: var(--warning-color, #f59e0b);
+    margin-top: 4px;
 }
 
 .pset-column__content {

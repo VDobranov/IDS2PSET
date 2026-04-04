@@ -5,7 +5,7 @@
 class IDS2PSETApp {
     constructor() {
         this.files = new Map();
-        this.psets = {};
+        this.psetsByIDS = {}; // { idsName: { psetName: psetData } }
         this.selectedPSetNames = new Set();
         this.ifcByIDS = {}; // { idsName: ifcContent or 'generating' }
         this.logs = [];
@@ -98,7 +98,9 @@ class IDS2PSETApp {
         }
 
         // Показываем/скрываем preview-section с PSet
-        const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+        const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
+            Object.values(psets).some(pset => !pset.is_pattern)
+        );
         const generateBtn = document.getElementById('generate-btn');
 
         if (hasValidPSets) {
@@ -112,31 +114,17 @@ class IDS2PSETApp {
     }
 
     /**
-     * Объединение PSet из разных IDS
+     * Добавление PSet из IDS
      * @param {Object} newPSets - Новые данные PSet
      * @param {string} sourceFile - Имя файла IDS источника
      */
     mergePSets(newPSets, sourceFile) {
+        if (!this.psetsByIDS[sourceFile]) {
+            this.psetsByIDS[sourceFile] = {};
+        }
         for (const [name, pset] of Object.entries(newPSets)) {
-            if (!this.psets[name]) {
-                this.psets[name] = { ...pset, source: sourceFile };
-                this.selectedPSetNames.add(name);
-            } else {
-                // Объединение свойств
-                const existing = this.psets[name];
-                for (const prop of pset.properties) {
-                    const exists = existing.properties.some(p => p.name === prop.name);
-                    if (!exists) {
-                        existing.properties.push(prop);
-                    }
-                }
-                // Объединение entity
-                for (const entity of pset.applicable_entities) {
-                    if (!existing.applicable_entities.includes(entity)) {
-                        existing.applicable_entities.push(entity);
-                    }
-                }
-            }
+            this.psetsByIDS[sourceFile][name] = { ...pset, source: sourceFile };
+            this.selectedPSetNames.add(name);
         }
     }
 
@@ -155,12 +143,11 @@ class IDS2PSETApp {
             let patternPSetCount = 0;
             let patternPropCount = 0;
             let validPSetCount = 0;
-            for (const [psetName, pset] of Object.entries(this.psets)) {
-                if (pset.source === name) {
-                    if (pset.is_pattern) patternPSetCount++;
-                    else validPSetCount++;
-                    patternPropCount += pset.properties.filter(p => p.is_pattern).length;
-                }
+            const idsPSets = this.psetsByIDS[name] || {};
+            for (const [psetName, pset] of Object.entries(idsPSets)) {
+                if (pset.is_pattern) patternPSetCount++;
+                else validPSetCount++;
+                patternPropCount += pset.properties.filter(p => p.is_pattern).length;
             }
 
             // Статус генерации для этого IDS
@@ -195,14 +182,13 @@ class IDS2PSETApp {
                 delete this.ifcByIDS[name];
 
                 // Удаляем PSet из этого IDS
-                const psetsToRemove = [];
-                for (const [psetName, pset] of Object.entries(this.psets)) {
-                    if (pset.source === name) {
-                        psetsToRemove.push(psetName);
-                        this.selectedPSetNames.delete(psetName);
+                delete this.psetsByIDS[name];
+                this.selectedPSetNames.clear();
+                for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
+                    for (const psetName of Object.keys(psets)) {
+                        this.selectedPSetNames.add(psetName);
                     }
                 }
-                psetsToRemove.forEach(psetName => delete this.psets[psetName]);
 
                 // Скрываем панель деталей если она открыта
                 const detailsPanel = document.getElementById('pset-details');
@@ -214,7 +200,9 @@ class IDS2PSETApp {
                 this.renderPSetColumns();
 
                 // Обновляем состояние кнопки генерации
-                const hasValidPSets = Object.values(this.psets).some(pset => !pset.is_pattern);
+                const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
+                    Object.values(psets).some(pset => !pset.is_pattern)
+                );
                 document.getElementById('generate-btn').disabled = !hasValidPSets;
             });
         });
@@ -252,31 +240,24 @@ class IDS2PSETApp {
         const container = document.getElementById('pset-container');
         container.innerHTML = '';
 
-        // Группируем PSet по источнику (IDS файлу)
-        const psetsBySource = {};
-        for (const [name, pset] of Object.entries(this.psets)) {
-            if (!psetsBySource[pset.source]) {
-                psetsBySource[pset.source] = [];
-            }
-            psetsBySource[pset.source].push({ name, pset });
-        }
-
         // Создаём колонку для каждого IDS файла
-        for (const [source, psetList] of Object.entries(psetsBySource)) {
+        for (const [source, psets] of Object.entries(this.psetsByIDS)) {
             const column = document.createElement('div');
             column.className = 'pset-column';
 
-            // Фильтруем PSet с regex
-            const validPSets = psetList.filter(({ pset }) => !pset.is_pattern);
+            const psetEntries = Object.entries(psets);
+            const validPSets = psetEntries.filter(([name, pset]) => !pset.is_pattern);
+            const patternCount = psetEntries.filter(([name, pset]) => pset.is_pattern).length;
 
             column.innerHTML = `
                 <div class="pset-column__header">
                     <div class="pset-column__title">${source}</div>
+                    ${patternCount > 0 ? `<div class="pset-column__pattern-warning">${patternCount} PSet описаны через regex</div>` : ''}
                 </div>
                 <div class="pset-column__content">
                     ${validPSets.length === 0
                         ? '<div class="pset-column__empty">Нет PSet для генерации (все описаны через regex)</div>'
-                        : `<div class="pset-tree">${validPSets.map(({ name, pset }) => this.renderPSetNode(name, pset)).join('')}</div>`
+                        : `<div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>`
                     }
                 </div>
             `;
@@ -339,10 +320,12 @@ class IDS2PSETApp {
         // Собираем все PSet из всех IDS
         const selectedPSets = {};
         let selectedCount = 0;
-        for (const [name, pset] of Object.entries(this.psets)) {
-            if (!pset.is_pattern) {
-                selectedPSets[name] = pset;
-                selectedCount++;
+        for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
+            for (const [name, pset] of Object.entries(psets)) {
+                if (!pset.is_pattern) {
+                    selectedPSets[name] = pset;
+                    selectedCount++;
+                }
             }
         }
 
@@ -425,8 +408,12 @@ class IDS2PSETApp {
      */
     getTotalPropertiesCount() {
         let count = 0;
-        for (const name of this.selectedPSetNames) {
-            count += this.psets[name].properties.length;
+        for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
+            for (const [name, pset] of Object.entries(psets)) {
+                if (this.selectedPSetNames.has(name) && !pset.is_pattern) {
+                    count += pset.properties.filter(p => !p.is_pattern).length;
+                }
+            }
         }
         return count;
     }
