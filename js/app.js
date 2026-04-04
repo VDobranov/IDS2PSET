@@ -112,7 +112,9 @@ class IDS2PSETApp {
 
         // Показываем/скрываем preview-section с PSet
         const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
-            Object.values(psets).some(pset => !pset.is_pattern)
+            Object.values(psets).some(
+                pset => !pset.is_pattern && !pset.simple_value_pattern
+            )
         );
         const generateBtn = document.getElementById('generate-btn');
 
@@ -219,7 +221,9 @@ class IDS2PSETApp {
 
                 // Обновляем состояние кнопки генерации и видимость секции
                 const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
-                    Object.values(psets).some(pset => !pset.is_pattern)
+                    Object.values(psets).some(
+                        pset => !pset.is_pattern && !pset.simple_value_pattern
+                    )
                 );
                 document.getElementById('generate-btn').disabled = !hasValidPSets;
                 document.getElementById('preview-section').classList.toggle('hidden', !hasValidPSets);
@@ -262,7 +266,9 @@ class IDS2PSETApp {
         // Считаем количество IDS с валидными PSet
         let validIDSCount = 0;
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
-            const hasValid = Object.values(psets).some(pset => !pset.is_pattern);
+            const hasValid = Object.values(psets).some(
+                pset => !pset.is_pattern && !pset.simple_value_pattern
+            );
             if (hasValid) validIDSCount++;
         }
 
@@ -277,12 +283,16 @@ class IDS2PSETApp {
         // Создаём колонку только для IDS с валидными PSet
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
             const psetEntries = Object.entries(psets);
-            const validPSets = psetEntries.filter(([name, pset]) => !pset.is_pattern);
+            const validPSets = psetEntries.filter(
+                ([name, pset]) => !pset.is_pattern && !pset.simple_value_pattern
+            );
 
             // Пропускаем IDS без валидных PSet
             if (validPSets.length === 0) continue;
 
-            const patternCount = psetEntries.filter(([name, pset]) => pset.is_pattern).length;
+            const patternCount = psetEntries.filter(
+                ([name, pset]) => pset.is_pattern || pset.simple_value_pattern
+            ).length;
             const column = document.createElement('div');
             column.className = 'pset-column';
 
@@ -426,6 +436,8 @@ class IDS2PSETApp {
         let selectedCount = 0;
         for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
             for (const [name, pset] of Object.entries(psets)) {
+                // Пропускаем PSet с regex-именем
+                if (pset.is_pattern || pset.simple_value_pattern) continue;
                 // Передаём PSet только с валидными свойствами
                 const validProps = pset.properties.filter(p => !p.is_pattern && !p.simple_value_pattern);
                 if (validProps.length > 0) {
@@ -454,7 +466,9 @@ class IDS2PSETApp {
             // Сохраняем результат только для IDS с валидными PSet
             for (const idsName of this.files.keys()) {
                 const idsPSets = this.psetsByIDS[idsName] || {};
-                const hasValid = Object.values(idsPSets).some(pset => !pset.is_pattern);
+                const hasValid = Object.values(idsPSets).some(
+                    pset => !pset.is_pattern && !pset.simple_value_pattern
+                );
                 if (hasValid) {
                     this.ifcByIDS[idsName] = ifcContent;
                 }
