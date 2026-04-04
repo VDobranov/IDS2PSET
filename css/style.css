@@ -231,9 +231,9 @@ body {
 }
 
 .file-item__ifc-download {
-    background: var(--sidebar-border);
-    color: var(--sidebar-text);
-    border: 1px solid var(--sidebar-border);
+    background: var(--sidebar-text);
+    color: var(--sidebar-bg);
+    border: 1px solid var(--sidebar-text);
     border-radius: 4px;
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.85em;
@@ -242,8 +242,8 @@ body {
 }
 
 .file-item__ifc-download:hover {
-    background: var(--sidebar-bg-hover);
-    color: var(--sidebar-text-hover);
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
 }
 
 /* ==================== ЛОГ ==================== */
@@ -271,25 +271,19 @@ body {
     overflow-y: auto;
 }
 
-.content__title {
-    font-size: 1.25em;
-    font-weight: 600;
-    margin-bottom: var(--spacing-lg);
-    color: var(--content-text);
-}
-
-/* ==================== PSet КОНТЕЙНЕР ==================== */
+/* PSet КОНТЕЙНЕР ==================== */
 .pset-container {
     display: flex;
     gap: var(--spacing-lg);
     overflow-x: auto;
     padding-bottom: var(--spacing-md);
+    flex-wrap: nowrap;
 }
 
 .pset-column {
     min-width: 400px;
-    max-width: 100%;
-    flex: 1;
+    max-width: 500px;
+    flex-shrink: 0;
     background: #fff;
     /* border-radius: 8px; */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

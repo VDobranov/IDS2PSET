@@ -76,11 +76,11 @@ class IDS2PSETApp {
     async handleFiles(fileList) {
         for (const file of fileList) {
             if (!file.name.endsWith('.ids') && !file.name.endsWith('.xml')) {
-                this.log(`⚠️ Пропущен файл: ${file.name} (не .ids или .xml)`);
+                this.log(`Пропущен файл: ${file.name} (не .ids или .xml)`);
                 continue;
             }
 
-            this.log(`📁 Загрузка: ${file.name}`);
+            this.log(`Загрузка: ${file.name}`);
             this.files.set(file.name, file);
 
             // Парсинг IDS
@@ -88,9 +88,9 @@ class IDS2PSETApp {
                 const content = await file.text();
                 const result = await window.pyodideBridge.parseIDS(content);
                 this.mergePSets(result, file.name);
-                this.log(`✓ Распарсен: ${file.name}`);
+                this.log(`Распарсен: ${file.name}`);
             } catch (error) {
-                this.log(`✗ Ошибка парсинга ${file.name}: ${error.message}`);
+                this.log(`Ошибка парсинга ${file.name}: ${error.message}`);
             }
 
             // Рендер после парсинга
@@ -170,15 +170,15 @@ class IDS2PSETApp {
             item.innerHTML = `
                 <div class="file-item__content">
                     <div class="file-item__header">
-                        <span class="file-item__name">✓ ${name}</span>
+                        <span class="file-item__name">${name}</span>
                         <button class="file-item__remove" data-file="${name}">×</button>
                     </div>
-                    ${patternPSetCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPSetCount} PSet с regex</div>` : ''}
-                    ${patternPropCount > 0 ? `<div class="file-item__warning">⚠️ ${patternPropCount} свойств с regex</div>` : ''}
+                    ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} PSet с regex</div>` : ''}
+                    ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} свойств с regex</div>` : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
-                        <div class="file-item__ifc-status">✅ Готово</div>
+                        <div class="file-item__ifc-status">Готово</div>
                         <button class="file-item__ifc-download" data-file="${name}">Скачать IFC</button>
                     </div>
                     ` : ''}
@@ -314,7 +314,7 @@ class IDS2PSETApp {
                         ${name} (${this.formatEntities(pset.applicable_entities)})
                     </label>
                 </div>
-                ${patternCount > 0 ? `<div class="tree-node__pattern-warning">⚠️ ${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
+                ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} свойств описаны через regex — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
                     ${pset.properties.filter(prop => !prop.is_pattern).map(prop => {
                         const measureType = prop.data_type || 'IfcText';
@@ -354,7 +354,7 @@ class IDS2PSETApp {
         const generateBtn = document.getElementById('generate-btn');
         generateBtn.disabled = true;
         generateBtn.textContent = 'Генерация...';
-        this.log('🔄 Генерация IFC...');
+        this.log('Генерация IFC...');
 
         try {
             const ifcContent = await window.pyodideBridge.generateIFC(
@@ -368,9 +368,9 @@ class IDS2PSETApp {
                 this.ifcByIDS[idsName] = ifcContent;
             }
 
-            this.log('✓ IFC сгенерирован');
+            this.log('IFC сгенерирован');
         } catch (error) {
-            this.log(`✗ Ошибка генерации: ${error.message}`);
+            this.log(`Ошибка генерации: ${error.message}`);
         }
 
         generateBtn.disabled = false;
@@ -396,7 +396,7 @@ class IDS2PSETApp {
         a.click();
         URL.revokeObjectURL(url);
 
-        this.log(`⬇ Скачан: ${fileName}`);
+        this.log(`Скачан: ${fileName}`);
     }
 
     /**
@@ -445,7 +445,7 @@ class IDS2PSETApp {
         a.click();
         URL.revokeObjectURL(url);
 
-        this.log('⬇ Файл скачан');
+        this.log('Файл скачан');
     }
 
     /**
