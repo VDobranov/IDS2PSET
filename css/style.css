@@ -264,7 +264,7 @@ h2 {
     /* border: 1px solid var(--sidebar-border); */
     /* border-radius: 4px; */
     padding: var(--spacing-sm);
-    font-family: 'PT Mono', 'Courier New', monospace;
+    font-family: 'PT Mono', monospace;
     font-size: 0.75em;
     color: var(--sidebar-text);
     overflow-y: auto;
