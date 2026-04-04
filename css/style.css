@@ -95,6 +95,7 @@ h2 {
     justify-content: space-between;
     align-items: center;
     /* border-top: 1px solid var(--sidebar-border); */
+    margin-top: auto;
 }
 
 .sidebar__footer .logo {
