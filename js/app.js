@@ -345,10 +345,13 @@ class IDS2PSETApp {
                 Object.keys(selectedPSets)
             );
 
-            // Сохраняем результат для всех IDS
-            // Каждый IDS получает свой IFC (общий для всех)
+            // Сохраняем результат только для IDS с валидными PSet
             for (const idsName of this.files.keys()) {
-                this.ifcByIDS[idsName] = ifcContent;
+                const idsPSets = this.psetsByIDS[idsName] || {};
+                const hasValid = Object.values(idsPSets).some(pset => !pset.is_pattern);
+                if (hasValid) {
+                    this.ifcByIDS[idsName] = ifcContent;
+                }
             }
 
             this.log('IFC сгенерирован');
