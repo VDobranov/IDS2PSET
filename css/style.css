@@ -100,12 +100,20 @@ h2 {
     margin-top: auto;
 }
 
-.sidebar__footer .logo {
-    color: var(--sidebar-secondary);
-    opacity: 0.5;
+.sidebar__footer .contacts {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
-.sidebar__footer .logo:hover {
+.sidebar__footer .contacts a {
+    display: flex;
+    align-items: center;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.sidebar__footer .contacts a:hover {
     opacity: 1;
 }
 
