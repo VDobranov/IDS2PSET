@@ -228,8 +228,14 @@ h2 {
 }
 
 .file-item__warning--error {
-    color: var(--error-color, #e53e3e);
+    color: var(--error-color);
     font-weight: 500;
+}
+
+.file-item__warning--ids-issue {
+    color: #d97706;
+    font-style: italic;
+    font-size: 0.8em;
 }
 
 /* IFC блок внутри file-item */

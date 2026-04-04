@@ -187,10 +187,9 @@ class IDS2PSETApp {
                         <span class="file-item__name">${name}</span>
                         <button class="file-item__remove" data-file="${name}">×</button>
                     </div>
-                    ${hardPSetCount > 0 ? `<div class="file-item__warning file-item__warning--error">${hardPSetCount} ${this.declension(hardPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
-                    ${hardPropCount > 0 ? `<div class="file-item__warning file-item__warning--error">${hardPropCount} ${this.declension(hardPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
-                    ${softPSetCount > 0 ? `<div class="file-item__warning">${softPSetCount} ${this.declension(softPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
-                    ${softPropCount > 0 ? `<div class="file-item__warning">${softPropCount} ${this.declension(softPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${hardPSetCount > 0 ? `<div class="file-item__warning">${hardPSetCount} ${this.declension(hardPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
+                    ${hardPropCount > 0 ? `<div class="file-item__warning">${hardPropCount} ${this.declension(hardPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
+                    ${softPSetCount > 0 || softPropCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
                     ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
