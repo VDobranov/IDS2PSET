@@ -103,7 +103,8 @@ h2 {
 .sidebar__footer .contacts {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    justify-content: space-between;
+    width: 100%;
 }
 
 .sidebar__footer .contacts a {
