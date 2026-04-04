@@ -10,16 +10,12 @@ IFC4 Specification:
 
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
-import re
 
 try:
     import ifcopenshell
     import ifcopenshell.template
 except ImportError:
     ifcopenshell = None
-
-# Regex-символы, указывающие что имя свойства — это regex
-_REGEX_NAME = re.compile(r"\\[dwsDWS]|\.\*|\.\+|\[|\^|\$|\{|\||\+|\?")
 
 
 @dataclass
@@ -145,17 +141,8 @@ class PSetGenerator:
         """Create an IfcPropertySetTemplate."""
         property_templates = []
         for prop in template.properties:
-            # Пропускаем свойства с regex-именами
-            prop_name = (
-                prop.name
-                if isinstance(prop, IFCTemplateProperty)
-                else prop.get("name", "")
-            )
-            if _REGEX_NAME.search(prop_name):
-                continue
-            if getattr(prop, "is_pattern", False) or getattr(
-                prop, "simple_value_pattern", False
-            ):
+            # Пропускаем ТОЛЬКО жёсткий regex (xs:pattern)
+            if getattr(prop, "is_pattern", False):
                 continue
             enumeration = None
             if prop.enum_values:
@@ -207,10 +194,8 @@ class PSetGenerator:
             properties = []
             for prop in pset_data["properties"]:
                 prop_name = prop["name"]
-                # Пропускаем свойства с regex-именами
-                if _REGEX_NAME.search(prop_name):
-                    continue
-                if prop.get("is_pattern") or prop.get("simple_value_pattern"):
+                # Пропускаем ТОЛЬКО жёсткий regex (xs:pattern)
+                if prop.get("is_pattern"):
                     continue
                 ifc_prop = IFCTemplateProperty(
                     name=prop_name,

@@ -1,0 +1,43 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - heading "IDS2PSET" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Генератор библиотек свойств на основе IDS
+    - generic [ref=e7]:
+      - generic [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+        - paragraph [ref=e13]: Перетащите IDS-файлы сюда
+        - paragraph [ref=e14]: или кликните для выбора
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2.ids
+          - button "×" [ref=e66] [cursor=pointer]
+        - generic [ref=e67]: 1 PSet описан регулярным выражением
+        - generic [ref=e68]: 1 свойство описано регулярным выражением
+        - generic [ref=e69]:
+          - generic [ref=e70]: Готово
+          - button "Скачать IFC" [active] [ref=e71] [cursor=pointer]
+    - button "Сгенерировать IFC" [ref=e17] [cursor=pointer]
+    - generic [ref=e18]:
+      - heading "СООБЩЕНИЯ" [level=2] [ref=e19]
+      - generic [ref=e20]: "[19:01:33] Приложение инициализировано [19:01:59] Загрузка: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2.ids [19:02:00] Распарсен: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2.ids [19:02:30] Генерация IFC... [19:02:32] IFC сгенерирован [19:03:19] Скачан: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2_PSet_Library.ifc"
+    - generic [ref=e22]:
+      - 'link "Contact: Вячеслав Добранов" [ref=e23] [cursor=pointer]':
+        - /url: mailto:vy.dobranov@yandex.ru
+        - img [ref=e24]
+      - link "Made with IfcOpenShell" [ref=e28] [cursor=pointer]:
+        - /url: https://ifcopenshell.org/
+        - img [ref=e29]
+  - main [ref=e35]:
+    - generic [ref=e44]:
+      - heading "Найденные шаблоны свойств" [level=2] [ref=e45]
+      - generic [ref=e47]: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2.ids
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: IDS_v1.1_Проверка_КСИ_элементов_ЦИМ_МОГЭ_ПЗУ_v3.2.ids
+          - generic [ref=e52]: 1 PSet описан регулярным выражением
+        - generic [ref=e55]:
+          - generic [ref=e56] [cursor=pointer]:
+            - checkbox ".*[КкKk][СсCc][ИиIi].* (IFCSITE, ... , IFCSTAIRFLIGHT|IFCSLAB [31])" [checked] [ref=e57]
+            - generic [ref=e58]: .*[КкKk][СсCc][ИиIi].* (IFCSITE, ... , IFCSTAIRFLIGHT|IFCSLAB [31])
+          - generic [ref=e61]: .*([КкKk][СсCc][ИиIi]).*([КкKk][ОоOo][ДдDd]).*([КкKk][ЛлLl][АаAa][СсCc][СсCc][АаAa].*).* (IFCTEXT, P_SINGLEVALUE)
