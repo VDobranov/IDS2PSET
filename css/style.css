@@ -232,12 +232,6 @@ h2 {
     font-weight: 500;
 }
 
-.file-item__warning--ids-issue {
-    color: #d97706;
-    font-style: italic;
-    font-size: 0.8em;
-}
-
 /* IFC блок внутри file-item */
 .file-item__ifc {
     margin-top: var(--spacing-sm);
@@ -383,9 +377,9 @@ h2 {
 }
 
 .pset-column__empty {
-    color: var(--sidebar-secondary);
+    color: #d97706;
     font-style: italic;
-    font-size: 0.9em;
+    font-size: 0.85em;
     text-align: center;
     padding: var(--spacing-lg);
 }

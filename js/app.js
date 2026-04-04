@@ -110,22 +110,23 @@ class IDS2PSETApp {
             this.renderFilesList();
         }
 
-        // Показываем/скрываем preview-section с PSet
-        const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
-            Object.values(psets).some(
-                pset => !pset.is_pattern && !pset.simple_value_pattern
-            )
+        // Показываем preview-section если есть PSet
+        const hasAnyPSets = Object.values(this.psetsByIDS).some(psets =>
+            Object.keys(psets).length > 0
+        );
+        // Блокировка ТОЛЬКО при жёстком regex (xs:pattern)
+        const allHardRegex = Object.values(this.psetsByIDS).every(psets =>
+            Object.values(psets).every(pset => pset.is_pattern)
         );
         const generateBtn = document.getElementById('generate-btn');
 
-        if (hasValidPSets) {
+        if (hasAnyPSets) {
             this.renderPSetColumns();
             document.getElementById('preview-section').classList.remove('hidden');
-            generateBtn.disabled = false;
         } else {
             document.getElementById('preview-section').classList.add('hidden');
-            generateBtn.disabled = true;
         }
+        generateBtn.disabled = allHardRegex || !hasAnyPSets;
     }
 
     /**
@@ -154,23 +155,18 @@ class IDS2PSETApp {
             const item = document.createElement('div');
             item.className = 'file-item';
 
-            // Подсчитываем PSet и свойства с регулярными выражениями для этого файла
+            // Подсчитываем PSet и свойства с жёстким regex (xs:pattern)
             let patternPSetCount = 0;
             let patternPropCount = 0;
-            let validPSetCount = 0;
-            let simpleValuePatternCount = 0; // regex в simpleValue (потенциально некорректный IDS)
             const idsPSets = this.psetsByIDS[name] || {};
             for (const [psetName, pset] of Object.entries(idsPSets)) {
                 if (pset.is_pattern) patternPSetCount++;
-                else validPSetCount++;
                 patternPropCount += pset.properties.filter(p => p.is_pattern).length;
-                if (pset.simple_value_pattern) simpleValuePatternCount++;
             }
 
             // Статус генерации для этого IDS
             const ifcStatus = this.ifcByIDS[name];
             const isGenerated = ifcStatus && ifcStatus !== 'generating';
-            const allRegex = validPSetCount === 0;
 
             item.innerHTML = `
                 <div class="file-item__content">
@@ -178,10 +174,8 @@ class IDS2PSETApp {
                         <span class="file-item__name">${name}</span>
                         <button class="file-item__remove" data-file="${name}">×</button>
                     </div>
-                    ${patternPSetCount > 0 ? `<div class="file-item__warning">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
-                    ${patternPropCount > 0 ? `<div class="file-item__warning">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
-                    ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
-                    ${!allRegex && simpleValuePatternCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
+                    ${patternPSetCount > 0 ? `<div class="file-item__warning file-item__warning--error">${patternPSetCount} ${this.declension(patternPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
+                    ${patternPropCount > 0 ? `<div class="file-item__warning file-item__warning--error">${patternPropCount} ${this.declension(patternPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
 
                     ${isGenerated ? `
                     <div class="file-item__ifc">
@@ -220,13 +214,15 @@ class IDS2PSETApp {
                 this.renderPSetColumns();
 
                 // Обновляем состояние кнопки генерации и видимость секции
-                const hasValidPSets = Object.values(this.psetsByIDS).some(psets =>
-                    Object.values(psets).some(
-                        pset => !pset.is_pattern && !pset.simple_value_pattern
-                    )
+                // Блокировка ТОЛЬКО при жёстком regex
+                const allHardRegex = Object.values(this.psetsByIDS).every(psets =>
+                    Object.keys(psets).length === 0 || Object.values(psets).every(pset => pset.is_pattern)
                 );
-                document.getElementById('generate-btn').disabled = !hasValidPSets;
-                document.getElementById('preview-section').classList.toggle('hidden', !hasValidPSets);
+                const hasAnyPSets = Object.values(this.psetsByIDS).some(psets =>
+                    Object.keys(psets).length > 0
+                );
+                document.getElementById('generate-btn').disabled = allHardRegex || !hasAnyPSets;
+                document.getElementById('preview-section').classList.toggle('hidden', !hasAnyPSets);
             });
         });
 
@@ -263,49 +259,45 @@ class IDS2PSETApp {
         const container = document.getElementById('pset-container');
         container.innerHTML = '';
 
-        // Считаем количество IDS с валидными PSet
-        let validIDSCount = 0;
-        for (const [source, psets] of Object.entries(this.psetsByIDS)) {
-            const hasValid = Object.values(psets).some(
-                pset => !pset.is_pattern && !pset.simple_value_pattern
-            );
-            if (hasValid) validIDSCount++;
-        }
+        let hasAnyContent = false;
 
-        // Если нет IDS с валидными PSet, скрываем секцию
-        if (validIDSCount === 0) {
-            document.getElementById('preview-section').classList.add('hidden');
-            document.getElementById('pset-nav-prev').classList.add('hidden');
-            document.getElementById('pset-nav-next').classList.add('hidden');
-            return;
-        }
-
-        // Создаём колонку только для IDS с валидными PSet
         for (const [source, psets] of Object.entries(this.psetsByIDS)) {
             const psetEntries = Object.entries(psets);
             const validPSets = psetEntries.filter(
-                ([name, pset]) => !pset.is_pattern && !pset.simple_value_pattern
+                ([name, pset]) => !pset.is_pattern
             );
 
-            // Пропускаем IDS без валидных PSet
+            // Пропускаем IDS без валидных PSet — не создаём пустую колонку
             if (validPSets.length === 0) continue;
 
-            const patternCount = psetEntries.filter(
-                ([name, pset]) => pset.is_pattern || pset.simple_value_pattern
+            hasAnyContent = true;
+
+            const hardRegexCount = psetEntries.filter(([name, pset]) => pset.is_pattern).length;
+            const softRegexCount = psetEntries.filter(
+                ([name, pset]) => !pset.is_pattern && pset.simple_value_pattern
             ).length;
+            const totalPatternCount = hardRegexCount + softRegexCount;
+
             const column = document.createElement('div');
             column.className = 'pset-column';
 
             column.innerHTML = `
                 <div class="pset-column__header">
                     <div class="pset-column__title">${source}</div>
-                    ${patternCount > 0 ? `<div class="pset-column__pattern-warning">${patternCount} ${this.declension(patternCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
+                    ${totalPatternCount > 0 ? `<div class="pset-column__pattern-warning">${totalPatternCount} ${this.declension(totalPatternCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
                 </div>
                 <div class="pset-column__content">
                     <div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>
                 </div>
             `;
             container.appendChild(column);
+        }
+
+        if (!hasAnyContent) {
+            document.getElementById('preview-section').classList.add('hidden');
+            document.getElementById('pset-nav-prev').classList.add('hidden');
+            document.getElementById('pset-nav-next').classList.add('hidden');
+            return;
         }
 
         // Навигация по колонкам
@@ -436,10 +428,10 @@ class IDS2PSETApp {
         let selectedCount = 0;
         for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
             for (const [name, pset] of Object.entries(psets)) {
-                // Пропускаем PSet с regex-именем
-                if (pset.is_pattern || pset.simple_value_pattern) continue;
-                // Передаём PSet только с валидными свойствами
-                const validProps = pset.properties.filter(p => !p.is_pattern && !p.simple_value_pattern);
+                // Пропускаем ТОЛЬКО жёсткий regex (xs:pattern)
+                if (pset.is_pattern) continue;
+                // Передаём PSet с валидными свойствами (не жёсткий regex)
+                const validProps = pset.properties.filter(p => !p.is_pattern);
                 if (validProps.length > 0) {
                     selectedPSets[name] = { ...pset, properties: validProps };
                     selectedCount++;
@@ -463,13 +455,11 @@ class IDS2PSETApp {
                 Object.keys(selectedPSets)
             );
 
-            // Сохраняем результат только для IDS с валидными PSet
+            // Сохраняем результат для IDS где нет жёсткого regex
             for (const idsName of this.files.keys()) {
                 const idsPSets = this.psetsByIDS[idsName] || {};
-                const hasValid = Object.values(idsPSets).some(
-                    pset => !pset.is_pattern && !pset.simple_value_pattern
-                );
-                if (hasValid) {
+                const hasHardRegex = Object.values(idsPSets).some(pset => pset.is_pattern);
+                if (!hasHardRegex) {
                     this.ifcByIDS[idsName] = ifcContent;
                 }
             }
