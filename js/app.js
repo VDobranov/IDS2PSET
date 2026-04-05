@@ -164,6 +164,7 @@ class IDS2PSETApp {
             let softPropCount = 0;
             let validPSetCount = 0;
             let entityWarningCount = 0;
+            let allInvalidEntities = [];
             const idsPSets = this.psetsByIDS[name] || {};
             for (const [psetName, pset] of Object.entries(idsPSets)) {
                 if (pset.is_pattern) hardPSetCount++;
@@ -174,7 +175,12 @@ class IDS2PSETApp {
                     p => !p.is_pattern && p.simple_value_pattern
                 ).length;
                 if (pset.entity_warning) entityWarningCount++;
+                if (pset.invalid_entities && pset.invalid_entities.length > 0) {
+                    allInvalidEntities = allInvalidEntities.concat(pset.invalid_entities);
+                }
             }
+            // Убираем дубликаты
+            allInvalidEntities = [...new Set(allInvalidEntities)];
 
             // Статус генерации для этого IDS
             const ifcStatus = this.ifcByIDS[name];
@@ -191,6 +197,7 @@ class IDS2PSETApp {
                     ${hardPropCount > 0 ? `<div class="file-item__warning">${hardPropCount} ${this.declension(hardPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
                     ${softPSetCount > 0 || softPropCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
                     ${entityWarningCount > 0 ? `<div class="file-item__warning">${entityWarningCount} ${this.declension(entityWarningCount, ['PSet имеет неопределённый тип сущности', 'PSet имеют неопределённый тип сущности', 'PSet имеют неопределённый тип сущности'])}</div>` : ''}
+                    ${allInvalidEntities.length > 0 ? `<div class="file-item__warning file-item__warning--entity-error">Сущности не найдены в IFC4: ${allInvalidEntities.join(', ')}</div>` : ''}
                     ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
@@ -398,6 +405,7 @@ class IDS2PSETApp {
                     </span>
                 </div>
                 ${pset.entity_warning ? '<div class="tree-node__entity-warning">Не удалось однозначно определить тип сущности из IDS</div>' : ''}
+                ${pset.invalid_entities && pset.invalid_entities.length > 0 ? `<div class="tree-node__entity-error">Сущности не найдены в IFC4: ${pset.invalid_entities.join(', ')}</div>` : ''}
                 ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} ${this.declension(patternCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])} — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
                     ${pset.properties.filter(prop => !prop.is_pattern).map(prop => {

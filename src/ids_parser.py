@@ -2,8 +2,132 @@
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List
+from typing import Dict, List, Set
 from dataclasses import dataclass, field
+
+# Валидные IFC4 сущности (основные, используемые в IDS)
+_VALID_IFC_ENTITIES: Set[str] = {
+    "IFCPROJECT",
+    "IFCSITE",
+    "IFCBUILDING",
+    "IFCBUILDINGSTOREY",
+    "IFCSPATIALZONE",
+    "IFCSPATIALELEMENT",
+    "IFCSPATIALSTRUCTUREELEMENT",
+    "IFCELEMENT",
+    "IFCBUILDINGELEMENT",
+    "IFCBUILDINGELEMENTPROXY",
+    "IFCWALL",
+    "IFCWALLSTANDARDCASE",
+    "IFCSLAB",
+    "IFCCOLUMN",
+    "IFCBEAM",
+    "IFCDOOR",
+    "IFCWINDOW",
+    "IFCROOF",
+    "IFCSTAIR",
+    "IFCSTAIRFLIGHT",
+    "IFCRAMP",
+    "IFCRAMPFLIGHT",
+    "IFCCOVERING",
+    "IFCPLATE",
+    "IFCMEMBER",
+    "IFCPILE",
+    "IFCFOOTING",
+    "IFCCHIMNEY",
+    "IFCCURTAINWALL",
+    "IFCSHADINGDEVICE",
+    "IFCELEMENTASSEMBLY",
+    "IFCRAILING",
+    "IFCDISTRIBUTIONELEMENT",
+    "IFCDISTRIBUTIONFLOWELEMENT",
+    "IFCFLOWSEGMENT",
+    "IFCFLOWCONTROLLER",
+    "IFCFLOWFITTING",
+    "IFCFLOWTERMINAL",
+    "IFCFLOWSTORAGEDEVICE",
+    "IFCFLOWTREATMENTDEVICE",
+    "IFCFLOWMOVINGDEVICE",
+    "IFCFLOWTERMINALELEMENT",
+    "IFCAIRTERMINAL",
+    "IFCAIRTOAIRHEATRECOVERY",
+    "IFCAUDIOVISUALAPPLIANCE",
+    "IFCBOILER",
+    "IFCBUILDINGELEMENTPART",
+    "IFCBURNER",
+    "IFCCABLECARRIERFITTING",
+    "IFCCABLECARRIERSEGMENT",
+    "IFCCABLEFITTING",
+    "IFCCABLESEGMENT",
+    "IFCCHILLER",
+    "IFCCOIL",
+    "IFCCOLUMNSTANDARDCASE",
+    "IFCCOMMUNICATIONSAPPLIANCE",
+    "IFCCONDENSER",
+    "IFCCONTROLLER",
+    "IFCCOOLEDBEAM",
+    "IFCCOOLINGTOWER",
+    "IFCCOVERINGSTANDARDCASE",
+    "IFCDAMPER",
+    "IFCDISTRIBUTIONCHAMBERELEMENT",
+    "IFCDUCTFITTING",
+    "IFCDUCTSEGMENT",
+    "IFCELECTRICAPPLIANCE",
+    "IFCELECTRICDISTRIBUTIONBOARD",
+    "IFCELECTRICFLOWSTORAGEDEVICE",
+    "IFCELECTRICGENERATOR",
+    "IFCELECTRICMOTOR",
+    "IFCEVAPORATIVECOOLER",
+    "IFCEVAPORATOR",
+    "IFCFAN",
+    "IFCFILTERTYPE",
+    "IFCFIRESUPPRESSIONTERMINAL",
+    "IFCFLOWMETER",
+    "IFCINTERCEPTOR",
+    "IFCJUNCTIONBOX",
+    "IFCLAMP",
+    "IFCLIGHTFIXTURE",
+    "IFCMEDICALDEVICE",
+    "IFCOUTLET",
+    "IFCPIPEFITTING",
+    "IFCPIPESEGMENT",
+    "IFCPUMP",
+    "IFCRADIATOR",
+    "IFCRECTANGULARDUCTSEGMENT",
+    "IFCSANITARYTERMINAL",
+    "IFCSPACEHEATER",
+    "IFCSTACKTERMINAL",
+    "IFCSWITCHINGDEVICE",
+    "IFCTANK",
+    "IFCTRANSFORMER",
+    "IFCTUBEBUNDLE",
+    "IFCUNITARYCONTROLELEMENT",
+    "IFCUNITARYEQUIPMENT",
+    "IFCVALVE",
+    "IFCVIBRATIONISOLATOR",
+    "IFCWATERSTORE",
+    "IFCWINDGENERATOR",
+    "IFCBEAMSTANDARDCASE",
+    "IFCFURNISHINGELEMENT",
+    "IFCFURNITURE",
+    "IFCSYSTEMFURNITUREELEMENT",
+    "IFCANNOTATION",
+    "IFCGRID",
+    "IFCPORT",
+    "IFCOPENINGELEMENT",
+    "IFCOPENINGSTANDARDCASE",
+    "IFCPROJECTIONELEMENT",
+    "IFCVOIDINGFEATURE",
+    "IFCGEOGRAPHICELEMENT",
+    "IFCCIVILELEMENT",
+    "IFCTRANSPORTELEMENT",
+    "IFCVIBRATIONDAMPER",
+    "IFCEXTERNALSPATIALELEMENT",
+    "IFCEXTERNALSPATIALZONE",
+    "IFCSPACE",
+    "IFCZONE",
+    "IFCFLOWINSTRUMENT",
+}
 
 # Regex-паттерны, указывающие на реальное регулярное выражение
 # Одиночные скобки/точки не считаем — они могут быть в обычных названиях
@@ -58,6 +182,23 @@ class PSetGroup:
         False  # True если regex в simpleValue (потенциально некорректный IDS)
     )
     entity_warning: bool = False  # True если entity не удалось однозначно определить
+    invalid_entities: List[str] = field(
+        default_factory=list
+    )  # Сущности, не найденные в IFC4
+
+
+def _validate_entities(entities: List[str]) -> List[str]:
+    """Проверяет сущности на валидность (существуют ли в IFC4).
+
+    Returns список невалидных сущностей.
+    """
+    invalid = []
+    for entity in entities:
+        # Убираем часть с predefined type (IFCSTAIR/IFCSTAIRFLIGHT)
+        base_entity = entity.split("/")[0] if "/" in entity else entity
+        if base_entity not in _VALID_IFC_ENTITIES:
+            invalid.append(entity)
+    return invalid
 
 
 def _extract_entity_names(elem, ns, xs_ns):
@@ -300,10 +441,14 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             if prop_req.name not in existing_names:
                 psets[pset_name].properties.append(prop_req)
 
-            # Add/merge entities - combine all entities with comma
+            # Add/merge entities and check validity
             for entity in entities:
                 if entity not in psets[pset_name].applicable_entities:
                     psets[pset_name].applicable_entities.append(entity)
+
+        # Validate entities for each PSet after all specifications processed
+        for pset in psets.values():
+            pset.invalid_entities = _validate_entities(pset.applicable_entities)
 
     return psets
 

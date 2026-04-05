@@ -238,6 +238,12 @@ h2 {
     font-size: 0.8em;
 }
 
+.file-item__warning--entity-error {
+    color: #b91c1c;
+    font-weight: 500;
+    font-size: 0.85em;
+}
+
 /* IFC блок внутри file-item */
 .file-item__ifc {
     margin-top: var(--spacing-sm);
@@ -410,6 +416,16 @@ h2 {
     padding: var(--spacing-xs) var(--spacing-md);
     background: rgba(180, 83, 9, 0.08);
     border-left: 3px solid #b45309;
+    margin: var(--spacing-xs) 0;
+}
+
+.tree-node__entity-error {
+    color: #b91c1c;
+    font-size: 0.85em;
+    font-weight: 500;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(185, 28, 28, 0.08);
+    border-left: 3px solid #b91c1c;
     margin: var(--spacing-xs) 0;
 }
 
