@@ -16,6 +16,13 @@ class PyodideBridge {
         this.initialized = false;
         this.pythonModulesLoaded = false;
         this.ifcOpenshellLoaded = false;
+        // Определяем базовый URL из пути к текущему скрипту
+        const scriptEl = document.querySelector('script[src*="pyodide-bridge"]');
+        if (scriptEl) {
+            this.baseURL = scriptEl.src.replace(/\/[^/]*$/, '/');
+        } else {
+            this.baseURL = new URL('.', window.location.href).href;
+        }
     }
 
     /**
@@ -76,17 +83,17 @@ class PyodideBridge {
             this.pyodide.FS.mkdir('/src');
 
             // Загрузка ids_parser.py
-            const idsParserResponse = await fetch('./src/ids_parser.py?v=5');
+            const idsParserResponse = await fetch(`${this.baseURL}src/ids_parser.py`);
             const idsParserContent = await idsParserResponse.text();
             this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
 
             // Загрузка pset_generator.py
-            const psetGeneratorResponse = await fetch('./src/pset_generator.py');
+            const psetGeneratorResponse = await fetch(`${this.baseURL}src/pset_generator.py`);
             const psetGeneratorContent = await psetGeneratorResponse.text();
             this.pyodide.FS.writeFile('/src/pset_generator.py', psetGeneratorContent);
 
             // Загрузка validator.py
-            const validatorResponse = await fetch('./src/validator.py');
+            const validatorResponse = await fetch(`${this.baseURL}src/validator.py`);
             const validatorContent = await validatorResponse.text();
             this.pyodide.FS.writeFile('/src/validator.py', validatorContent);
 
