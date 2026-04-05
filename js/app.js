@@ -163,6 +163,7 @@ class IDS2PSETApp {
             let softPSetCount = 0;
             let softPropCount = 0;
             let validPSetCount = 0;
+            let entityWarningCount = 0;
             const idsPSets = this.psetsByIDS[name] || {};
             for (const [psetName, pset] of Object.entries(idsPSets)) {
                 if (pset.is_pattern) hardPSetCount++;
@@ -172,6 +173,7 @@ class IDS2PSETApp {
                 softPropCount += pset.properties.filter(
                     p => !p.is_pattern && p.simple_value_pattern
                 ).length;
+                if (pset.entity_warning) entityWarningCount++;
             }
 
             // Статус генерации для этого IDS
@@ -188,6 +190,7 @@ class IDS2PSETApp {
                     ${hardPSetCount > 0 ? `<div class="file-item__warning">${hardPSetCount} ${this.declension(hardPSetCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
                     ${hardPropCount > 0 ? `<div class="file-item__warning">${hardPropCount} ${this.declension(hardPropCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])}</div>` : ''}
                     ${softPSetCount > 0 || softPropCount > 0 ? '<div class="file-item__warning file-item__warning--ids-issue">Возможно, IDS некорректен — регулярные выражения указаны напрямую. Проверьте файл отдельно.</div>' : ''}
+                    ${entityWarningCount > 0 ? `<div class="file-item__warning">${entityWarningCount} ${this.declension(entityWarningCount, ['PSet имеет неопределённый тип сущности', 'PSet имеют неопределённый тип сущности', 'PSet имеют неопределённый тип сущности'])}</div>` : ''}
                     ${allRegex ? '<div class="file-item__warning file-item__warning--error">IFC не будет сгенерирован — все PSet описаны регулярными выражениями</div>' : ''}
 
                     ${isGenerated ? `
@@ -394,6 +397,7 @@ class IDS2PSETApp {
                         ${name} (${this.formatEntities(pset.applicable_entities)})
                     </span>
                 </div>
+                ${pset.entity_warning ? '<div class="tree-node__entity-warning">Не удалось однозначно определить тип сущности из IDS</div>' : ''}
                 ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} ${this.declension(patternCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])} — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
                     ${pset.properties.filter(prop => !prop.is_pattern).map(prop => {

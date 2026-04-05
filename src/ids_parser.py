@@ -57,6 +57,50 @@ class PSetGroup:
     simple_value_pattern: bool = (
         False  # True если regex в simpleValue (потенциально некорректный IDS)
     )
+    entity_warning: bool = False  # True если entity не удалось однозначно определить
+
+
+def _extract_entity_names(elem, ns, xs_ns):
+    """Extract entity names from ids:name element.
+
+    Handles:
+    - simpleValue: direct value
+    - xs:restriction with xs:enumeration: multiple values
+    - xs:restriction with xs:pattern: split by | for alternatives
+
+    Returns tuple: (names, has_warning) where has_warning is True if entity
+    could not be unambiguously determined.
+    """
+    if elem is None:
+        return ([], False)
+
+    # Try simpleValue first
+    simple_value = elem.find("ids:simpleValue", ns)
+    if simple_value is not None and simple_value.text:
+        return ([simple_value.text], False)
+
+    # Try xs:restriction
+    restriction = elem.find("xs:restriction", xs_ns)
+    if restriction is not None:
+        # Try xs:enumeration
+        enumerations = restriction.findall("xs:enumeration", xs_ns)
+        if enumerations:
+            values = [e.get("value") for e in enumerations if e.get("value")]
+            return (values, False)
+
+        # Try xs:pattern — split by | for alternative entity types
+        pattern = restriction.find("xs:pattern", xs_ns)
+        if pattern is not None:
+            pattern_value = pattern.get("value")
+            if pattern_value:
+                # Split by | to get individual entity types
+                entities = [e.strip() for e in pattern_value.split("|") if e.strip()]
+                if entities:
+                    return (entities, False)
+                else:
+                    return ([pattern_value], True)  # Could not parse
+
+    return ([], True)  # Could not determine entity
 
 
 def _extract_values(elem, ns, xs_ns):
@@ -104,11 +148,8 @@ def _extract_entity_with_type(entity_elem, ns, xs_ns):
     if entity_elem is None:
         return []
 
-    # Get entity names (can be multiple via enumeration)
-    name_elem = entity_elem.find("ids:name", ns)
-    entity_names = []
-    if name_elem is not None:
-        entity_names, _ = _extract_values(name_elem, ns, xs_ns)
+    # Get entity names using new parser
+    entity_names, _ = _extract_entity_names(entity_elem.find("ids:name", ns), ns, xs_ns)
 
     # Get predefined types (can be multiple via enumeration)
     predefined_type_elem = entity_elem.find("ids:predefinedType", ns)
@@ -158,6 +199,7 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
     for spec in specifications:
         # Get entity from applicability with predefined type
         entities = []
+        entity_warning = False
 
         # Try ids:applicability first
         applicability = spec.find("ids:applicability", ns)
@@ -165,7 +207,11 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             entity_elem = applicability.find("ids:entity", ns)
             if entity_elem is not None:
                 entity_values = _extract_entity_with_type(entity_elem, ns, xs_ns)
+                if not entity_values:
+                    entity_warning = True
                 entities.extend(entity_values)
+            else:
+                entity_warning = True
 
         # Also try ids:requirements (some IDS put entity there)
         requirements = spec.find("ids:requirements", ns)
@@ -173,6 +219,8 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             entity_elem = requirements.find("ids:entity", ns)
             if entity_elem is not None:
                 entity_values = _extract_entity_with_type(entity_elem, ns, xs_ns)
+                if not entity_values:
+                    entity_warning = True
                 entities.extend(entity_values)
 
         # Get requirements
@@ -242,7 +290,10 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                     name=pset_name,
                     is_pattern=pset_is_pattern,
                     simple_value_pattern=pset_has_simple_value_regex,
+                    entity_warning=entity_warning,
                 )
+            elif entity_warning:
+                psets[pset_name].entity_warning = True
 
             # Add property if not already present
             existing_names = [p.name for p in psets[pset_name].properties]

@@ -403,6 +403,16 @@ h2 {
     word-break: break-all;
 }
 
+.tree-node__entity-warning {
+    color: #b45309;
+    font-size: 0.85em;
+    font-style: italic;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(180, 83, 9, 0.08);
+    border-left: 3px solid #b45309;
+    margin: var(--spacing-xs) 0;
+}
+
 .tree-node__pattern-warning {
     color: var(--warning-color);
     font-size: 0.85em;
