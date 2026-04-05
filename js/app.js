@@ -6,7 +6,6 @@ class IDS2PSETApp {
     constructor() {
         this.files = new Map();
         this.psetsByIDS = {}; // { idsName: { psetName: psetData } }
-        this.selectedPSetNames = new Set();
         this.ifcByIDS = {}; // { idsName: ifcContent or 'generating' }
         this.logs = [];
 
@@ -143,7 +142,6 @@ class IDS2PSETApp {
         }
         for (const [name, pset] of Object.entries(newPSets)) {
             this.psetsByIDS[sourceFile][name] = { ...pset, source: sourceFile };
-            this.selectedPSetNames.add(name);
         }
     }
 
@@ -212,12 +210,6 @@ class IDS2PSETApp {
 
                 // Удаляем PSet из этого IDS
                 delete this.psetsByIDS[name];
-                this.selectedPSetNames.clear();
-                for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
-                    for (const psetName of Object.keys(psets)) {
-                        this.selectedPSetNames.add(psetName);
-                    }
-                }
 
                 // Скрываем панель деталей если она открыта
                 const detailsPanel = document.getElementById('pset-details');
@@ -322,18 +314,6 @@ class IDS2PSETApp {
 
         // Навигация по колонкам
         this.setupPSetNav();
-
-        // Обработчики чекбоксов
-        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                const name = e.target.dataset.pset;
-                if (e.target.checked) {
-                    this.selectedPSetNames.add(name);
-                } else {
-                    this.selectedPSetNames.delete(name);
-                }
-            });
-        });
     }
 
     /**
@@ -413,13 +393,9 @@ class IDS2PSETApp {
         return `
             <div class="tree-node">
                 <div class="tree-node__header">
-                    <input type="checkbox"
-                           id="pset-${name}"
-                           ${this.selectedPSetNames.has(name) ? 'checked' : ''}
-                           data-pset="${name}">
-                    <label for="pset-${name}">
+                    <span class="tree-node__name">
                         ${name} (${this.formatEntities(pset.applicable_entities)})
-                    </label>
+                    </span>
                 </div>
                 ${patternCount > 0 ? `<div class="tree-node__pattern-warning">${patternCount} ${this.declension(patternCount, ['свойство описано регулярным выражением', 'свойства описаны регулярными выражениями', 'свойств описано регулярными выражениями'])} — не будут созданы</div>` : ''}
                 <div class="tree-node__children">
@@ -524,7 +500,7 @@ class IDS2PSETApp {
 
         stats.innerHTML = `
             <ul>
-                <li>PSet: ${this.selectedPSetNames.size}</li>
+                <li>PSet: ${this.getTotalPSetCount()}</li>
                 <li>Свойств: ${this.getTotalPropertiesCount()}</li>
             </ul>
         `;
@@ -543,7 +519,7 @@ class IDS2PSETApp {
         let count = 0;
         for (const [idsName, psets] of Object.entries(this.psetsByIDS)) {
             for (const [name, pset] of Object.entries(psets)) {
-                if (this.selectedPSetNames.has(name) && !pset.is_pattern) {
+                if (!pset.is_pattern) {
                     count += pset.properties.filter(p => !p.is_pattern).length;
                 }
             }

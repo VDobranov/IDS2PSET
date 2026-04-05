@@ -26,6 +26,9 @@ node_modules/
 *.swo
 *~
 
+# Playwright MCP
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db

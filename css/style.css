@@ -409,21 +409,16 @@ h2 {
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
     background: #fafafa;
-    cursor: pointer;
 }
 
 .tree-node__header:hover {
     background: #f0f0f0;
 }
 
-.tree-node__header input[type="checkbox"] {
-    cursor: pointer;
-}
-
-.tree-node__header label {
+.tree-node__name {
     flex-grow: 1;
-    cursor: pointer;
     font-size: 0.9em;
+    font-weight: 500;
 }
 
 .tree-node__pattern-warning {
