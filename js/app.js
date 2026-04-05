@@ -292,6 +292,7 @@ class IDS2PSETApp {
 
             const column = document.createElement('div');
             column.className = 'pset-column';
+            column.dataset.source = source;
 
             column.innerHTML = `
                 <div class="pset-column__content">
@@ -328,7 +329,7 @@ class IDS2PSETApp {
             prevBtn.classList.add('hidden');
             nextBtn.classList.add('hidden');
             if (total === 1 && columns[0]) {
-                label.textContent = columns[0].querySelector('.pset-column__title')?.textContent || '';
+                label.textContent = columns[0].dataset.source || '';
             } else {
                 label.textContent = '';
             }
@@ -349,7 +350,7 @@ class IDS2PSETApp {
             const safeCurrent = Math.min(Math.max(current, 1), total);
             prevBtn.disabled = false;
             nextBtn.disabled = false;
-            const title = columns[safeCurrent - 1]?.querySelector('.pset-column__title')?.textContent || '';
+            const title = columns[safeCurrent - 1]?.dataset.source || '';
             label.textContent = `${safeCurrent} / ${total} — ${title}`;
         };
 
