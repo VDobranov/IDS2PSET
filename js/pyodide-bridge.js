@@ -16,12 +16,15 @@ class PyodideBridge {
         this.initialized = false;
         this.pythonModulesLoaded = false;
         this.ifcOpenshellLoaded = false;
-        // Определяем базовый URL из пути к текущему скрипту
+        // Определяем базовый URL (корень проекта)
         const scriptEl = document.querySelector('script[src*="pyodide-bridge"]');
         if (scriptEl) {
-            this.baseURL = scriptEl.src.replace(/\/[^/]*$/, '/');
+            // script.src = .../IDS2PSET/js/pyodide-bridge.js → baseURL = .../IDS2PSET/
+            const jsDir = new URL('.', scriptEl.src).href;
+            this.baseURL = new URL('..', jsDir).href;
+            this.baseURL = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
         } else {
-            this.baseURL = new URL('.', window.location.href).href;
+            this.baseURL = window.location.origin + '/';
         }
         console.log('[PyodideBridge] baseURL:', this.baseURL);
     }
