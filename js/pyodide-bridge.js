@@ -23,6 +23,7 @@ class PyodideBridge {
         } else {
             this.baseURL = new URL('.', window.location.href).href;
         }
+        console.log('[PyodideBridge] baseURL:', this.baseURL);
     }
 
     /**
@@ -83,17 +84,24 @@ class PyodideBridge {
             this.pyodide.FS.mkdir('/src');
 
             // Загрузка ids_parser.py
-            const idsParserResponse = await fetch(`${this.baseURL}src/ids_parser.py`);
+            const idsParserUrl = new URL('src/ids_parser.py', this.baseURL).href;
+            console.log('[PyodideBridge] Loading:', idsParserUrl);
+            const idsParserResponse = await fetch(idsParserUrl);
+            if (!idsParserResponse.ok) throw new Error(`Не удалось загрузить ids_parser.py: ${idsParserResponse.status} ${idsParserResponse.statusText}`);
             const idsParserContent = await idsParserResponse.text();
             this.pyodide.FS.writeFile('/src/ids_parser.py', idsParserContent);
 
             // Загрузка pset_generator.py
-            const psetGeneratorResponse = await fetch(`${this.baseURL}src/pset_generator.py`);
+            const psetGeneratorUrl = new URL('src/pset_generator.py', this.baseURL).href;
+            const psetGeneratorResponse = await fetch(psetGeneratorUrl);
+            if (!psetGeneratorResponse.ok) throw new Error(`Не удалось загрузить pset_generator.py: ${psetGeneratorResponse.status} ${psetGeneratorResponse.statusText}`);
             const psetGeneratorContent = await psetGeneratorResponse.text();
             this.pyodide.FS.writeFile('/src/pset_generator.py', psetGeneratorContent);
 
             // Загрузка validator.py
-            const validatorResponse = await fetch(`${this.baseURL}src/validator.py`);
+            const validatorUrl = new URL('src/validator.py', this.baseURL).href;
+            const validatorResponse = await fetch(validatorUrl);
+            if (!validatorResponse.ok) throw new Error(`Не удалось загрузить validator.py: ${validatorResponse.status} ${validatorResponse.statusText}`);
             const validatorContent = await validatorResponse.text();
             this.pyodide.FS.writeFile('/src/validator.py', validatorContent);
 
