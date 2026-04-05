@@ -355,26 +355,6 @@ h2 {
     flex-direction: column;
 }
 
-.pset-column__header {
-    padding: var(--spacing-md);
-    border-bottom: 1px solid #e0e0e0;
-    background: #fafafa;
-    /* border-radius: 8px 8px 0 0; */
-}
-
-.pset-column__title {
-    font-size: 0.9em;
-    font-weight: 600;
-    color: var(--content-text);
-    word-break: break-all;
-}
-
-.pset-column__pattern-warning {
-    font-size: 0.85em;
-    color: var(--warning-color, #f59e0b);
-    margin-top: 4px;
-}
-
 .pset-column__content {
     padding: var(--spacing-md);
     flex-grow: 1;
@@ -418,7 +398,9 @@ h2 {
 .tree-node__name {
     flex-grow: 1;
     font-size: 0.9em;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--content-text);
+    word-break: break-all;
 }
 
 .tree-node__pattern-warning {

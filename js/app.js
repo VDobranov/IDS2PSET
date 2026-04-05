@@ -294,10 +294,6 @@ class IDS2PSETApp {
             column.className = 'pset-column';
 
             column.innerHTML = `
-                <div class="pset-column__header">
-                    <div class="pset-column__title">${source}</div>
-                    ${totalPatternCount > 0 ? `<div class="pset-column__pattern-warning">${totalPatternCount} ${this.declension(totalPatternCount, ['PSet описан регулярным выражением', 'PSet описаны регулярными выражениями', 'PSet описаны регулярными выражениями'])}</div>` : ''}
-                </div>
                 <div class="pset-column__content">
                     <div class="pset-tree">${validPSets.map(([name, pset]) => this.renderPSetNode(name, pset)).join('')}</div>
                 </div>
