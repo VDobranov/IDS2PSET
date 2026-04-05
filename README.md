@@ -2,6 +2,8 @@
 
 Генератор библиотек свойств IFC на основе IDS спецификаций.
 
+[Руководство пользователя (PDF)](INSTRUCTIONS.pdf)
+
 ## Установка
 
 ```bash
@@ -59,6 +61,7 @@ IDS2PSET/
 
 ## Документация
 
+- [Инструкция (Markdown)](docs/INSTRUCTIONS.md)
 - [SRS документация](docs/SRS/01_introduction.md)
 - [План реализации](docs/SRS/11_implementation_plan.md)
 
