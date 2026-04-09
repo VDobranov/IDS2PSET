@@ -12,6 +12,9 @@ from ids_parser import (  # noqa: E402
     parse_ids_content,
     PropertyRequirement,
     PSetGroup,
+    _validate_entities,
+    _extract_entity_names,
+    _VALID_IFC_ENTITIES,
 )
 
 
@@ -305,6 +308,375 @@ class TestIntegration:
         assert len(pset.properties) == 2
         assert all(isinstance(p, PropertyRequirement) for p in pset.properties)
         assert len(pset.applicable_entities) > 0
+
+
+class TestValidateEntities:
+    """Tests for _validate_entities function."""
+
+    def test_valid_entities_no_invalid(self):
+        """Test that valid entities return empty list."""
+        entities = ["IFCWALL", "IFCSLAB", "IFCDOOR"]
+        result = _validate_entities(entities)
+        assert result == []
+
+    def test_invalid_entity_detected(self):
+        """Test that invalid entities are detected."""
+        entities = ["IFCWALL", "IFCMAGICWALL", "IFCSLAB"]
+        result = _validate_entities(entities)
+        assert result == ["IFCMAGICWALL"]
+
+    def test_all_invalid(self):
+        """Test all entities invalid."""
+        entities = ["IFCNOTREAL", "IFCFAKE"]
+        result = _validate_entities(entities)
+        assert len(result) == 2
+
+    def test_entity_with_predefined_type(self):
+        """Test entity with predefined type (e.g., IFCSTAIR/PREFABRICATED)."""
+        entities = ["IFCSTAIR/PREFABRICATED", "IFCWALL"]
+        result = _validate_entities(entities)
+        assert result == []  # IFCSTAIR is valid
+
+    def test_predefined_type_invalid(self):
+        """Test entity with invalid base and predefined type."""
+        entities = ["IFCFAKE/PREFABRICATED"]
+        result = _validate_entities(entities)
+        assert result == ["IFCFAKE/PREFABRICATED"]
+
+    def test_empty_entities(self):
+        """Test empty entity list."""
+        result = _validate_entities([])
+        assert result == []
+
+
+class TestExtractEntityNames:
+    """Tests for _extract_entity_names function."""
+
+    def _make_elem(self, xml_snippet):
+        """Helper to create XML element from snippet."""
+        import xml.etree.ElementTree as ET
+
+        ns = {
+            "ids": "http://standards.buildingsmart.org/IDS",
+            "xs": "http://www.w3.org/2001/XMLSchema",
+        }
+        wrapped = (
+            f'<root xmlns:ids="{ns["ids"]}" xmlns:xs="{ns["xs"]}">{xml_snippet}</root>'
+        )
+        root = ET.fromstring(wrapped)
+        return root.find("ids:name", ns)
+
+    def test_simple_value(self):
+        """Test extracting simpleValue entity name."""
+        elem = self._make_elem(
+            "<ids:name><ids:simpleValue>IFCWALL</ids:simpleValue></ids:name>"
+        )
+        names, warning = _extract_entity_names(
+            elem,
+            {"ids": "http://standards.buildingsmart.org/IDS"},
+            {"xs": "http://www.w3.org/2001/XMLSchema"},
+        )
+        assert names == ["IFCWALL"]
+        assert warning is False
+
+    def test_xs_enumeration(self):
+        """Test extracting xs:enumeration entity names."""
+        elem = self._make_elem(
+            '<ids:name><xs:restriction base="xs:string">'
+            '<xs:enumeration value="IFCWALL"/>'
+            '<xs:enumeration value="IFCSLAB"/>'
+            "</xs:restriction></ids:name>"
+        )
+        names, warning = _extract_entity_names(
+            elem,
+            {"ids": "http://standards.buildingsmart.org/IDS"},
+            {"xs": "http://www.w3.org/2001/XMLSchema"},
+        )
+        assert set(names) == {"IFCWALL", "IFCSLAB"}
+        assert warning is False
+
+    def test_xs_pattern_split(self):
+        """Test extracting xs:pattern entity names split by |."""
+        elem = self._make_elem(
+            '<ids:name><xs:restriction base="xs:string">'
+            '<xs:pattern value="IFCSTAIRFLIGHT|IFCSLAB"/>'
+            "</xs:restriction></ids:name>"
+        )
+        names, warning = _extract_entity_names(
+            elem,
+            {"ids": "http://standards.buildingsmart.org/IDS"},
+            {"xs": "http://www.w3.org/2001/XMLSchema"},
+        )
+        assert set(names) == {"IFCSTAIRFLIGHT", "IFCSLAB"}
+        assert warning is False
+
+    def test_xs_pattern_empty(self):
+        """Test xs:pattern with empty value returns warning."""
+        elem = self._make_elem(
+            '<ids:name><xs:restriction base="xs:string">'
+            '<xs:pattern value=""/>'
+            "</xs:restriction></ids:name>"
+        )
+        names, warning = _extract_entity_names(
+            elem,
+            {"ids": "http://standards.buildingsmart.org/IDS"},
+            {"xs": "http://www.w3.org/2001/XMLSchema"},
+        )
+        # Empty pattern value is filtered out, returns warning with empty list
+        assert names == []
+        assert warning is True
+
+    def test_none_element(self):
+        """Test None element returns empty with no warning."""
+        names, warning = _extract_entity_names(
+            None,
+            {"ids": "http://standards.buildingsmart.org/IDS"},
+            {"xs": "http://www.w3.org/2001/XMLSchema"},
+        )
+        assert names == []
+        assert warning is False
+
+
+class TestEntityWarningAndInvalid:
+    """Tests for entity_warning and invalid_entities in parse results."""
+
+    def test_entity_warning_no_applicability(self):
+        """Test entity_warning when applicability section is empty."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        assert result["TestPSet"].entity_warning is True
+
+    def test_valid_entities_no_invalid(self):
+        """Test that valid entities produce no invalid_entities."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert result["TestPSet"].invalid_entities == []
+
+    def test_invalid_entity_in_result(self):
+        """Test that invalid entities appear in invalid_entities."""
+        # Используем несуществующую сущность
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCFAKEWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert result["TestPSet"].invalid_entities == ["IFCFAKEWALL"]
+
+    def test_entity_pattern_split_in_result(self):
+        """Test that entity xs:pattern is split into individual entities."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity>
+        <name>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="IFCSTAIRFLIGHT|IFCSLAB"/>
+          </xs:restriction>
+        </name>
+      </entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        assert "IFCSTAIRFLIGHT" in result["TestPSet"].applicable_entities
+        assert "IFCSLAB" in result["TestPSet"].applicable_entities
+        assert result["TestPSet"].invalid_entities == []
+
+
+class TestPSetGroupNewFields:
+    """Tests for new PSetGroup fields."""
+
+    def test_psetgroup_entity_warning_default(self):
+        """Test entity_warning defaults to False."""
+        pset = PSetGroup(name="TestPSet")
+        assert pset.entity_warning is False
+
+    def test_psetgroup_invalid_entities_default(self):
+        """Test invalid_entities defaults to empty list."""
+        pset = PSetGroup(name="TestPSet")
+        assert pset.invalid_entities == []
+
+    def test_psetgroup_entity_warning_set(self):
+        """Test entity_warning can be set."""
+        pset = PSetGroup(name="TestPSet", entity_warning=True)
+        assert pset.entity_warning is True
+
+    def test_psetgroup_invalid_entities_set(self):
+        """Test invalid_entities can be set."""
+        pset = PSetGroup(name="TestPSet", invalid_entities=["IFCFAKE"])
+        assert pset.invalid_entities == ["IFCFAKE"]
+
+
+class TestValidIfcEntities:
+    """Tests for _VALID_IFC_ENTITIES set."""
+
+    def test_common_entities_present(self):
+        """Test that common entities are in the valid set."""
+        assert "IFCWALL" in _VALID_IFC_ENTITIES
+        assert "IFCSLAB" in _VALID_IFC_ENTITIES
+        assert "IFCDOOR" in _VALID_IFC_ENTITIES
+        assert "IFCWINDOW" in _VALID_IFC_ENTITIES
+        assert "IFCCOLUMN" in _VALID_IFC_ENTITIES
+        assert "IFCSTAIRFLIGHT" in _VALID_IFC_ENTITIES
+        assert "IFCRAILING" in _VALID_IFC_ENTITIES
+        assert "IFCELEMENTASSEMBLY" in _VALID_IFC_ENTITIES
+
+    def test_fake_entity_not_present(self):
+        """Test that fake entities are not in the valid set."""
+        assert "IFCFAKEWALL" not in _VALID_IFC_ENTITIES
+        assert "IFCMAGICWALL" not in _VALID_IFC_ENTITIES
+
+
+class TestIsRegexLike:
+    """Tests for _is_regex_like function."""
+
+    def test_empty_text(self):
+        """Test empty text returns False."""
+        from ids_parser import _is_regex_like
+
+        assert _is_regex_like("") is False
+        assert _is_regex_like(None) is False
+
+    def test_regex_patterns_detected(self):
+        """Test regex patterns are detected."""
+        from ids_parser import _is_regex_like
+
+        assert _is_regex_like(".*wall") is True
+        assert _is_regex_like("[A-Z]+") is True
+        assert _is_regex_like("\\d+") is True
+
+    def test_plain_text_not_regex(self):
+        """Test plain text is not detected as regex."""
+        from ids_parser import _is_regex_like
+
+        assert _is_regex_like("IFCWALL") is False
+        assert _is_regex_like("TestPSet") is False
+
+
+class TestExtractValuesPattern:
+    """Tests for _extract_values with xs:pattern."""
+
+    def _make_elem(self, xml_snippet):
+        import xml.etree.ElementTree as ET
+        from ids_parser import _extract_values
+
+        self._extract_values = _extract_values
+
+        ns = {
+            "ids": "http://standards.buildingsmart.org/IDS",
+            "xs": "http://www.w3.org/2001/XMLSchema",
+        }
+        wrapped = (
+            f'<root xmlns:ids="{ns["ids"]}" xmlns:xs="{ns["xs"]}">{xml_snippet}</root>'
+        )
+        root = ET.fromstring(wrapped)
+        return root.find("ids:propertySet", ns), ns
+
+    def test_xs_pattern_in_property_set(self):
+        """Test xs:pattern in propertySet returns has_pattern=True."""
+        from ids_parser import _extract_values
+
+        elem, ns = self._make_elem(
+            '<ids:propertySet><xs:restriction base="xs:string">'
+            '<xs:pattern value=".*wall.*"/>'
+            "</xs:restriction></ids:propertySet>"
+        )
+        values, has_pattern = _extract_values(
+            elem, ns, {"xs": "http://www.w3.org/2001/XMLSchema"}
+        )
+        assert values == [".*wall.*"]
+        assert has_pattern is True
+
+    def test_xs_pattern_in_base_name(self):
+        """Test xs:pattern in baseName returns has_pattern=True."""
+        import xml.etree.ElementTree as ET
+        from ids_parser import _extract_values
+
+        ns = {
+            "ids": "http://standards.buildingsmart.org/IDS",
+            "xs": "http://www.w3.org/2001/XMLSchema",
+        }
+        wrapped = (
+            '<root xmlns:ids="http://standards.buildingsmart.org/IDS" '
+            'xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<ids:baseName><xs:restriction base="xs:string">'
+            '<xs:pattern value=".*prop.*"/>'
+            "</xs:restriction></ids:baseName></root>"
+        )
+        root = ET.fromstring(wrapped)
+        elem = root.find("ids:baseName", ns)
+        values, has_pattern = _extract_values(
+            elem, ns, {"xs": "http://www.w3.org/2001/XMLSchema"}
+        )
+        assert values == [".*prop.*"]
+        assert has_pattern is True
+
+
+class TestParseIdsContentWithEntityInRequirements:
+    """Tests for parsing entity from requirements section."""
+
+    def test_entity_in_requirements(self):
+        """Test parsing entity from requirements instead of applicability."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <requirements>
+      <entity><name><simpleValue>IFCBEAM</simpleValue></name></entity>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>BeamPSet</simpleValue></propertySet>
+        <baseName><simpleValue>Material</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "BeamPSet" in result
+        assert "IFCBEAM" in result["BeamPSet"].applicable_entities
 
 
 if __name__ == "__main__":
