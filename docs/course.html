@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Как работает IDS2PSET — интерактивный курс</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ========== DESIGN SYSTEM ========== */
+        :root {
+            --color-bg:             #FAF7F2;
+            --color-bg-warm:        #F5F0E8;
+            --color-bg-code:        #1E1E2E;
+            --color-text:           #2C2A28;
+            --color-text-secondary: #6B6560;
+            --color-text-muted:     #9E9790;
+            --color-border:         #E5DFD6;
+            --color-border-light:   #EEEBE5;
+            --color-surface:        #FFFFFF;
+            --color-surface-warm:   #FDF9F3;
+
+            --color-accent:         #D4A843;
+            --color-accent-hover:   #C49A35;
+            --color-accent-light:   #FDF6E3;
+            --color-accent-muted:   #C49A35;
+
+            --color-success:        #2D8B55;
+            --color-success-light:  #E8F5EE;
+            --color-error:          #C93B3B;
+            --color-error-light:    #FDE8E8;
+            --color-info:           #2A7B9B;
+            --color-info-light:     #E4F2F7;
+
+            --color-actor-1:        #D4A843;
+            --color-actor-2:        #2A7B9B;
+            --color-actor-3:        #7B6DAA;
+            --color-actor-4:        #D94F30;
+            --color-actor-5:        #2D8B55;
+
+            --font-display:  'Bricolage Grotesque', Georgia, serif;
+            --font-body:     'DM Sans', -apple-system, sans-serif;
+            --font-mono:     'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+            --text-xs:   0.75rem;
+            --text-sm:   0.875rem;
+            --text-base: 1rem;
+            --text-lg:   1.125rem;
+            --text-xl:   1.25rem;
+            --text-2xl:  1.5rem;
+            --text-3xl:  1.875rem;
+            --text-4xl:  2.25rem;
+            --text-5xl:  3rem;
+            --text-6xl:  3.75rem;
+
+            --leading-tight:  1.15;
+            --leading-snug:   1.3;
+            --leading-normal: 1.6;
+            --leading-loose:  1.8;
+
+            --space-1:  0.25rem;
+            --space-2:  0.5rem;
+            --space-3:  0.75rem;
+            --space-4:  1rem;
+            --space-5:  1.25rem;
+            --space-6:  1.5rem;
+            --space-8:  2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+            --space-24: 6rem;
+
+            --content-width:     800px;
+            --content-width-wide: 1000px;
+            --nav-height:        50px;
+            --radius-sm:  8px;
+            --radius-md:  12px;
+            --radius-lg:  16px;
+            --radius-full: 9999px;
+
+            --shadow-sm:  0 1px 2px rgba(44, 42, 40, 0.05);
+            --shadow-md:  0 4px 12px rgba(44, 42, 40, 0.08);
+            --shadow-lg:  0 8px 24px rgba(44, 42, 40, 0.1);
+            --shadow-xl:  0 16px 48px rgba(44, 42, 40, 0.12);
+
+            --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+            --duration-fast:   150ms;
+            --duration-normal: 300ms;
+            --duration-slow:   500ms;
+            --stagger-delay:   120ms;
+        }
+
+        /* ========== RESET & BASE ========== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html {
+            scroll-snap-type: y proximity;
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+        body {
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            line-height: var(--leading-normal);
+            color: var(--color-text);
+            background: var(--color-bg);
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(212, 168, 67, 0.04) 0%, transparent 50%);
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+
+        /* ========== NAVIGATION ========== */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: var(--nav-height);
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border-light);
+            box-shadow: var(--shadow-sm);
+        }
+        .progress-bar {
+            position: absolute; bottom: 0; left: 0;
+            height: 3px; background: var(--color-accent);
+            width: 0; transition: width 100ms linear;
+        }
+        .nav-inner {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 100%; max-width: var(--content-width-wide); margin: 0 auto; padding: 0 var(--space-6);
+        }
+        .nav-title {
+            font-family: var(--font-display); font-weight: 700; font-size: var(--text-sm);
+            color: var(--color-text);
+        }
+        .nav-dots { display: flex; gap: var(--space-2); }
+        .nav-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            border: 2px solid var(--color-text-muted);
+            background: transparent; cursor: pointer; padding: 0;
+            transition: all var(--duration-normal) var(--ease-out);
+            position: relative;
+        }
+        .nav-dot:hover { border-color: var(--color-accent); }
+        .nav-dot.current { border-color: var(--color-accent); background: var(--color-accent); box-shadow: 0 0 0 3px rgba(212,168,67,0.2); }
+        .nav-dot.visited { background: var(--color-accent); border-color: var(--color-accent); }
+        .nav-dot .nav-dot-tooltip {
+            display: none; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+            background: var(--color-bg-code); color: #CDD6F4; font-size: var(--text-xs);
+            padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm);
+            white-space: nowrap; z-index: 200;
+        }
+        .nav-dot:hover .nav-dot-tooltip { display: block; }
+
+        /* ========== MODULES ========== */
+        .module {
+            min-height: 100dvh;
+            min-height: 100vh;
+            scroll-snap-align: start;
+            padding: calc(var(--nav-height) + var(--space-12)) var(--space-6) var(--space-16);
+        }
+        .module-content {
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+        .module-content-wide {
+            max-width: var(--content-width-wide);
+            margin: 0 auto;
+        }
+        .module-header {
+            margin-bottom: var(--space-12);
+        }
+        .module-number {
+            font-family: var(--font-display); font-weight: 800;
+            font-size: var(--text-6xl); color: var(--color-accent); opacity: 0.15;
+            line-height: 1;
+        }
+        .module-title {
+            font-family: var(--font-display); font-weight: 700;
+            font-size: var(--text-4xl); line-height: var(--leading-tight);
+            margin-top: var(--space-4);
+        }
+        .module-subtitle {
+            font-size: var(--text-lg); color: var(--color-text-secondary);
+            margin-top: var(--space-3); line-height: var(--leading-snug);
+        }
+
+        /* ========== SCREENS ========== */
+        .screen {
+            margin-bottom: var(--space-16);
+        }
+        .screen-heading {
+            font-family: var(--font-display); font-weight: 600;
+            font-size: var(--text-2xl); margin-bottom: var(--space-6);
+        }
+        .lead {
+            font-size: var(--text-lg); color: var(--color-text-secondary);
+            line-height: var(--leading-loose); margin-bottom: var(--space-8);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-slow) var(--ease-out),
+                        transform var(--duration-slow) var(--ease-out);
+        }
+        .animate-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stagger-children > .animate-in {
+            transition-delay: calc(var(--stagger-index, 0) * var(--stagger-delay));
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,67,0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(212,168,67,0); }
+        }
+        @keyframes flowPacket {
+            0% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ========== CODE BLOCKS ========== */
+        .code-block {
+            background: var(--color-bg-code);
+            color: #CDD6F4;
+            padding: var(--space-6);
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            overflow-x: hidden;
+            margin: var(--space-6) 0;
+        }
+        .code-block pre, .code-block code {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-x: hidden;
+        }
+        .code-block .code-label {
+            position: absolute; top: var(--space-2); right: var(--space-3);
+            font-size: var(--text-xs); text-transform: uppercase;
+            letter-spacing: 0.1em; opacity: 0.4;
+        }
+        .code-keyword  { color: #CBA6F7; }
+        .code-string   { color: #A6E3A1; }
+        .code-function { color: #89B4FA; }
+        .code-comment  { color: #6C7086; font-style: italic; }
+        .code-number   { color: #FAB387; }
+        .code-property { color: #F9E2AF; }
+        .code-operator { color: #94E2D5; }
+        .code-tag      { color: #F38BA8; }
+        .code-attr     { color: #F9E2AF; }
+        .code-value    { color: #A6E3A1; }
+
+        /* ========== TRANSLATION BLOCKS ========== */
+        .translation-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin: var(--space-8) 0;
+        }
+        .translation-code {
+            background: var(--color-bg-code);
+            color: #CDD6F4;
+            padding: var(--space-6);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .translation-code pre, .translation-code code {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-x: hidden;
+        }
+        .translation-english {
+            background: var(--color-surface-warm);
+            padding: var(--space-6);
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            border-left: 3px solid var(--color-accent);
+        }
+        .translation-label {
+            position: absolute;
+            top: var(--space-2); right: var(--space-3);
+            font-size: var(--text-xs); text-transform: uppercase;
+            letter-spacing: 0.1em; opacity: 0.4;
+        }
+        .translation-english .translation-label {
+            position: static; color: var(--color-text-muted);
+            font-size: var(--text-xs); text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: var(--space-3); display: block;
+        }
+        .tl {
+            margin-bottom: var(--space-2);
+            padding-bottom: var(--space-2);
+            border-bottom: 1px solid var(--color-border-light);
+        }
+        .tl:last-child { border-bottom: none; }
+
+        @media (max-width: 768px) {
+            .translation-block { grid-template-columns: 1fr; }
+            .translation-english { border-left: none; border-top: 3px solid var(--color-accent); }
+        }
+
+        /* ========== CALLOUTS ========== */
+        .callout {
+            display: flex; gap: var(--space-4);
+            padding: var(--space-6);
+            border-radius: var(--radius-md);
+            margin: var(--space-8) 0;
+            border-left: 4px solid;
+        }
+        .callout-accent {
+            background: var(--color-accent-light);
+            border-left-color: var(--color-accent);
+        }
+        .callout-info {
+            background: var(--color-info-light);
+            border-left-color: var(--color-info);
+        }
+        .callout-warning {
+            background: var(--color-error-light);
+            border-left-color: var(--color-error);
+        }
+        .callout-icon { font-size: var(--text-2xl); flex-shrink: 0; }
+        .callout-content { line-height: var(--leading-normal); }
+        .callout-title { font-weight: 600; display: block; margin-bottom: var(--space-1); }
+
+        /* ========== PATTERN CARDS ========== */
+        .pattern-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-8) 0;
+        }
+        .pattern-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal);
+        }
+        .pattern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .pattern-icon {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--text-xl); margin-bottom: var(--space-4);
+        }
+        .pattern-title {
+            font-family: var(--font-display); font-weight: 600;
+            font-size: var(--text-lg); margin-bottom: var(--space-2);
+        }
+        .pattern-desc {
+            font-size: var(--text-sm); color: var(--color-text-secondary);
+            line-height: var(--leading-normal);
+        }
+
+        /* ========== FLOW DIAGRAM ========== */
+        .flow-steps {
+            display: flex; align-items: center; gap: var(--space-3);
+            margin: var(--space-8) 0; flex-wrap: wrap;
+        }
+        .flow-step {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-4) var(--space-5);
+            text-align: center;
+            flex: 1; min-width: 120px;
+        }
+        .flow-step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--color-accent); color: white;
+            font-size: var(--text-sm); font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+        .flow-step p { font-size: var(--text-sm); }
+        .flow-arrow {
+            font-size: var(--text-xl); color: var(--color-accent); flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .flow-steps { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+
+        /* ========== ICON-LABEL ROWS ========== */
+        .icon-row {
+            display: flex; flex-direction: column; gap: var(--space-4);
+            margin: var(--space-6) 0;
+        }
+        .icon-row-item {
+            display: flex; align-items: center; gap: var(--space-4);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-sm);
+        }
+        .icon-row-icon {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--text-lg); flex-shrink: 0;
+        }
+        .icon-row-label { font-weight: 500; }
+        .icon-row-desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+        /* ========== NUMBERED STEP CARDS ========== */
+        .step-cards {
+            display: flex; flex-direction: column; gap: var(--space-4);
+            margin: var(--space-8) 0;
+        }
+        .step-card {
+            display: flex; gap: var(--space-4); align-items: flex-start;
+            padding: var(--space-5);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+        .step-num {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--color-accent); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: var(--text-sm); flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-content h4 { font-family: var(--font-display); font-weight: 600; margin-bottom: var(--space-1); }
+        .step-content p { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+        /* ========== GLOSSARY TOOLTIPS ========== */
+        .term {
+            border-bottom: 1.5px dashed var(--color-accent-muted);
+            cursor: pointer;
+            position: relative;
+            color: var(--color-text);
+        }
+        .term:hover, .term.active {
+            border-bottom-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+        .term-tooltip {
+            position: fixed;
+            z-index: 9999;
+            background: var(--color-bg-code);
+            color: #CDD6F4;
+            font-family: var(--font-body);
+            font-size: var(--text-sm);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-sm);
+            max-width: 320px;
+            line-height: var(--leading-normal);
+            box-shadow: var(--shadow-lg);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--duration-fast);
+        }
+        .term-tooltip.show { opacity: 1; }
+
+        /* ========== CHAT ANIMATION ========== */
+        .chat-window {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            margin: var(--space-8) 0;
+        }
+        .chat-messages { padding: var(--space-6); min-height: 200px; }
+        .chat-message {
+            display: flex; gap: var(--space-3); align-items: flex-start;
+            margin-bottom: var(--space-4);
+        }
+        .chat-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: var(--text-sm); flex-shrink: 0;
+        }
+        .chat-bubble {
+            background: var(--color-bg-warm);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            max-width: 80%;
+        }
+        .chat-sender { font-size: var(--text-xs); font-weight: 600; display: block; margin-bottom: var(--space-1); }
+        .chat-bubble p { font-size: var(--text-sm); line-height: var(--leading-normal); }
+        .chat-typing {
+            display: flex; gap: var(--space-3); align-items: center;
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-border-light);
+        }
+        .chat-typing-dots { display: flex; gap: 4px; }
+        .typing-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--color-text-muted);
+            animation: typingBounce 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        .chat-controls {
+            display: flex; gap: var(--space-3); align-items: center;
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-border-light);
+        }
+        .chat-progress { font-size: var(--text-sm); color: var(--color-text-muted); margin-left: auto; }
+
+        /* ========== QUIZ ========== */
+        .quiz-container { margin: var(--space-8) 0; }
+        .quiz-question-block { margin-bottom: var(--space-6); }
+        .quiz-question {
+            font-family: var(--font-display); font-weight: 600;
+            font-size: var(--text-lg); margin-bottom: var(--space-4);
+        }
+        .quiz-options { display: flex; flex-direction: column; gap: var(--space-2); }
+        .quiz-option {
+            display: flex; align-items: center; gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
+            cursor: pointer; width: 100%; text-align: left;
+            font-family: var(--font-body); font-size: var(--text-sm);
+            transition: border-color var(--duration-fast), background var(--duration-fast);
+        }
+        .quiz-option:hover { border-color: var(--color-accent-muted); }
+        .quiz-option.selected { border-color: var(--color-accent); background: var(--color-accent-light); }
+        .quiz-option.correct { border-color: var(--color-success); background: var(--color-success-light); }
+        .quiz-option.incorrect { border-color: var(--color-error); background: var(--color-error-light); }
+        .quiz-option-radio {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid var(--color-border);
+            transition: all var(--duration-fast); flex-shrink: 0;
+        }
+        .quiz-option.selected .quiz-option-radio {
+            border-color: var(--color-accent);
+            background: var(--color-accent);
+            box-shadow: inset 0 0 0 3px white;
+        }
+        .quiz-feedback {
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height var(--duration-normal), opacity var(--duration-normal);
+            padding: 0 var(--space-3); margin-top: 0;
+            border-radius: var(--radius-sm); font-size: var(--text-sm);
+        }
+        .quiz-feedback.show { max-height: 300px; opacity: 1; padding: var(--space-3); margin-top: var(--space-2); }
+        .quiz-feedback.success { background: var(--color-success-light); color: var(--color-success); }
+        .quiz-feedback.error { background: var(--color-error-light); color: var(--color-error); }
+        .quiz-check-btn, .quiz-reset-btn {
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+            cursor: pointer; border: none; margin-right: var(--space-3);
+        }
+        .quiz-check-btn { background: var(--color-accent); color: white; }
+        .quiz-check-btn:hover { background: var(--color-accent-hover); }
+        .quiz-reset-btn { background: var(--color-border-light); color: var(--color-text); }
+
+        /* ========== VISUAL FILE TREE ========== */
+        .file-tree {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            margin: var(--space-6) 0;
+        }
+        .file-tree-item {
+            padding: var(--space-2) 0;
+            display: flex; align-items: center; gap: var(--space-3);
+        }
+        .file-tree-icon { font-size: var(--text-base); flex-shrink: 0; }
+        .file-tree-label { font-weight: 500; }
+        .file-tree-annotation {
+            font-family: var(--font-body); font-size: var(--text-xs);
+            color: var(--color-text-muted); margin-left: var(--space-2);
+        }
+        .file-tree-sub { padding-left: var(--space-8); }
+
+        /* ========== ARCHITECTURE DIAGRAM ========== */
+        .arch-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-6);
+            margin: var(--space-8) 0;
+        }
+        @media (max-width: 768px) {
+            .arch-diagram { grid-template-columns: 1fr; }
+        }
+        .arch-zone {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+        }
+        .arch-zone-label {
+            font-family: var(--font-display); font-weight: 600;
+            font-size: var(--text-sm); text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--color-text-muted);
+            margin-bottom: var(--space-4);
+        }
+        .arch-component {
+            display: flex; align-items: center; gap: var(--space-3);
+            padding: var(--space-3);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
+            cursor: pointer;
+            transition: border-color var(--duration-fast), background var(--duration-fast);
+        }
+        .arch-component:hover { border-color: var(--color-accent-muted); background: var(--color-accent-light); }
+        .arch-component.active { border-color: var(--color-accent); background: var(--color-accent-light); }
+        .arch-icon {
+            width: 28px; height: 28px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--text-sm); flex-shrink: 0;
+        }
+        .arch-desc {
+            font-size: var(--text-sm); color: var(--color-text-secondary);
+            padding: var(--space-4); background: var(--color-surface-warm);
+            border-radius: var(--radius-sm); margin-top: var(--space-4);
+            line-height: var(--leading-normal);
+        }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+            cursor: pointer; border: none;
+            transition: background var(--duration-fast);
+        }
+        .btn-accent {
+            background: var(--color-accent); color: white;
+        }
+        .btn-accent:hover { background: var(--color-accent-hover); }
+
+        /* ========== BADGE LIST ========== */
+        .badge-list { display: flex; flex-direction: column; gap: var(--space-3); margin: var(--space-6) 0; }
+        .badge-item {
+            display: flex; align-items: center; gap: var(--space-4);
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-sm);
+            transition: border-color var(--duration-fast);
+        }
+        .badge-item:hover { border-color: var(--color-accent-muted); }
+        .badge-code {
+            font-family: var(--font-mono); font-size: var(--text-sm);
+            background: var(--color-bg-code); color: #CBA6F7;
+            padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm);
+            white-space: nowrap;
+        }
+        .badge-desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            :root { --text-4xl: 1.875rem; --text-5xl: 2.25rem; --text-6xl: 3rem; }
+            .module { padding: calc(var(--nav-height) + var(--space-8)) var(--space-4) var(--space-12); }
+        }
+        @media (max-width: 480px) {
+            :root { --text-4xl: 1.5rem; --text-5xl: 1.875rem; --text-6xl: 2.25rem; }
+        }
+
+        /* ========== HIDDEN UTILITY ========== */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+    <div class="progress-bar" id="progress-bar"></div>
+    <div class="nav-inner">
+        <span class="nav-title">Как работает IDS2PSET</span>
+        <div class="nav-dots" id="nav-dots"></div>
+    </div>
+</nav>
+
+<!-- TOOLTIP CONTAINER -->
+<div class="term-tooltip" id="tooltip-bubble"></div>
+
+<!-- ==================== MODULE 1: USER JOURNEY ==================== -->
+<section class="module" id="module-1" style="background: var(--color-bg-warm)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">01</span>
+            <h1 class="module-title">От файла к библиотеке свойств</h1>
+            <p class="module-subtitle">Что происходит, когда вы перетаскиваете IDS-файл в приложение</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 1.1: What is IDS2PSET -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что это за приложение?</h2>
+                <p class="lead">
+                    <strong>IDS2PSET</strong> — это веб-приложение, которое превращает <span class="term" data-def="IDS (Information Delivery Specification) — стандарт ISO 29481, описывающий требования к информации в BIM-моделях. Файл .ids содержит XML со спецификациями: какие свойства должны быть у каких элементов здания.">IDS-файлы</span> (спецификации требований) в <span class="term" data-def="IFC (Industry Foundation Classes) — открытый формат для BIM-данных. Файл .ifc содержит 3D-геометрию и свойства элементов здания: стены, двери, перекрытия и т.д.">IFC-файлы</span> (библиотеки свойств). Работает <strong>полностью в браузере</strong> — без сервера, без установки.
+                </p>
+
+                <div class="callout callout-accent animate-in">
+                    <div class="callout-icon">💡</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Зачем это нужно?</strong>
+                        <p>Когда BIM-моделист создаёт здание в Revit или ArchiCAD, ему нужно добавить свойства к элементам: «кадастровый номер», «тип покрытия», «масса». IDS-файл описывает, какие свойства нужны. IDS2PSET превращает это описание в готовую IFC-библиотеку, которую можно импортировать в BIM-программу.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 1.2: The user journey -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Путь пользователя за 4 шага</h2>
+                <p>Представьте: у вас есть IDS-файл от заказчика. Вот что вы делаете:</p>
+
+                <div class="step-cards stagger-children">
+                    <div class="step-card animate-in">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <h4>Откройте приложение в браузере</h4>
+                            <p>Перейдите на vdobranov.github.io/IDS2PSET — ничего не нужно устанавливать</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <h4>Перетащите IDS-файл</h4>
+                            <p>Или кликните по зоне загрузки и выберите файл через диалог</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <h4>Нажмите «Сгенерировать IFC»</h4>
+                            <p>Приложение обработает файл через Python прямо в браузере</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">4</div>
+                        <div class="step-content">
+                            <h4>Скачайте готовый IFC</h4>
+                            <p>Готовая библиотека свойств сохранится в папку загрузок</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 1.3: Flow diagram -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что происходит под капотом?</h2>
+                <p class="lead">Когда вы перетаскиваете файл, запускается цепочка событий:</p>
+
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step-num">1</div>
+                        <p>Файл читается из браузера</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">2</div>
+                        <p>JS отправляет XML в Python</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">3</div>
+                        <p>Python парсит IDS</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">4</div>
+                        <p>Python создаёт IFC</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">5</div>
+                        <p>Браузер скачивает файл</p>
+                    </div>
+                </div>
+
+                <div class="callout callout-info animate-in">
+                    <div class="callout-icon">🔑</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Ключевой момент</strong>
+                        <p>Python работает <strong>в браузере</strong>, а не на сервере. Для этого используется технология <span class="term" data-def="WebAssembly (WASM) — формат байт-кода, который браузеры могут выполнять почти так же быстро, как нативный код. Позволяет запускать программы на C, C++, Rust и Python прямо в браузере.">WebAssembly</span> через библиотеку <span class="term" data-def="Pyodide — проект, который компилирует Python 3 в WebAssembly. Позволяет запускать Python-код и устанавливать Python-пакеты прямо в браузере через micropip.">Pyodide</span>.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 1.4: Code translation -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Посмотрим на код: обработка файла</h2>
+                <p>Когда файл попадает в приложение, срабатывает метод <code>handleFiles</code>. Вот что он делает:</p>
+
+                <div class="translation-block">
+                    <div class="translation-code">
+                        <span class="translation-label">CODE (app.js)</span>
+                        <pre><code><span class="code-line"><span class="code-keyword">async</span> <span class="code-function">handleFiles</span>(fileList) {</span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> file <span class="code-keyword">of</span> fileList) {</span>
+<span class="code-line">    <span class="code-keyword">if</span> (!file.name.endsWith(<span class="code-string">'.ids'</span>)) <span class="code-keyword">continue</span>;</span>
+<span class="code-line">    <span class="code-keyword">const</span> content = <span class="code-keyword">await</span> file.<span class="code-function">text</span>();</span>
+<span class="code-line">    <span class="code-keyword">const</span> result = <span class="code-keyword">await</span> window</span>
+<span class="code-line">      .pyodideBridge.<span class="code-function">parseIDS</span>(content);</span>
+<span class="code-line">    <span class="code-keyword">this</span>.<span class="code-function">mergePSets</span>(result, file.name);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">this</span>.<span class="code-function">renderFilesList</span>();</span>
+<span class="code-line">}</span></code></pre>
+                    </div>
+                    <div class="translation-english">
+                        <span class="translation-label">PLAIN ENGLISH</span>
+                        <div class="translation-lines">
+                            <p class="tl">Этот метод обрабатывает список загруженных файлов...</p>
+                            <p class="tl">Для каждого файла проверяем расширение...</p>
+                            <p class="tl">Пропускаем всё, что не .ids...</p>
+                            <p class="tl">Читаем содержимое файла как текст (это XML)...</p>
+                            <p class="tl">Отправляем XML в Python через «мост» (pyodideBridge)...</p>
+                            <p class="tl">Получаем распарсенные данные PSet...</p>
+                            <p class="tl">Объединяем с уже загруженными данными...</p>
+                            <p class="tl">Конец цикла по файлам...</p>
+                            <p class="tl">Обновляем интерфейс — показываем файлы и PSet...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MODULE 2: MEET THE ACTORS ==================== -->
+<section class="module" id="module-2" style="background: var(--color-bg)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">02</span>
+            <h1 class="module-title">Знакомьтесь, действующие лица</h1>
+            <p class="module-subtitle">Четыре компонента, которые работают вместе</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 2.1: The four components -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Кто есть кто</h2>
+                <p class="lead">Приложение состоит из четырёх основных частей. Каждая отвечает за свою задачу:</p>
+
+                <div class="pattern-cards stagger-children">
+                    <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1)">
+                        <div class="pattern-icon" style="background: var(--color-actor-1); color: white;">🖥️</div>
+                        <h4 class="pattern-title">UI (app.js)</h4>
+                        <p class="pattern-desc">Интерфейс: зона загрузки, кнопки, колонки с PSet, лог сообщений. Обработчик событий мыши.</p>
+                    </div>
+                    <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+                        <div class="pattern-icon" style="background: var(--color-actor-2); color: white;">🌉</div>
+                        <h4 class="pattern-title">Pyodide Bridge</h4>
+                        <p class="pattern-desc">Мост между JavaScript и Python. Загружает Python-среду, передаёт данные туда-обратно.</p>
+                    </div>
+                    <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-3)">
+                        <div class="pattern-icon" style="background: var(--color-actor-3); color: white;">📖</div>
+                        <h4 class="pattern-title">IDS Parser</h4>
+                        <p class="pattern-desc">Читает XML-файл IDS, извлекает шаблоны свойств, проверяет сущности на валидность.</p>
+                    </div>
+                    <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-4)">
+                        <div class="pattern-icon" style="background: var(--color-actor-4); color: white;">🏗️</div>
+                        <h4 class="pattern-title">PSet Generator</h4>
+                        <p class="pattern-desc">Создаёт IFC4-файл через ifcopenshell — библиотеку для работы с IFC.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 2.2: File tree -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Как это выглядит в проекте</h2>
+
+                <div class="file-tree">
+                    <div class="file-tree-item">
+                        <span class="file-tree-icon">📄</span>
+                        <span class="file-tree-label">index.html</span>
+                        <span class="file-tree-annotation">— каркас страницы</span>
+                    </div>
+                    <div class="file-tree-item">
+                        <span class="file-tree-icon">🎨</span>
+                        <span class="file-tree-label">css/style.css</span>
+                        <span class="file-tree-annotation">— стили интерфейса</span>
+                    </div>
+                    <div class="file-tree-item file-tree-sub">
+                        <span class="file-tree-icon">📁</span>
+                        <span class="file-tree-label">js/</span>
+                    </div>
+                    <div class="file-tree-item" style="padding-left: 48px;">
+                        <span class="file-tree-icon">⚡</span>
+                        <span class="file-tree-label">app.js</span>
+                        <span class="file-tree-annotation">— UI-логика</span>
+                    </div>
+                    <div class="file-tree-item" style="padding-left: 48px;">
+                        <span class="file-tree-icon">🌉</span>
+                        <span class="file-tree-label">pyodide-bridge.js</span>
+                        <span class="file-tree-annotation">— мост JS↔Python</span>
+                    </div>
+                    <div class="file-tree-item file-tree-sub">
+                        <span class="file-tree-icon">📁</span>
+                        <span class="file-tree-label">src/</span>
+                        <span class="file-tree-annotation">— Python-модули</span>
+                    </div>
+                    <div class="file-tree-item" style="padding-left: 48px;">
+                        <span class="file-tree-icon">📖</span>
+                        <span class="file-tree-label">ids_parser.py</span>
+                        <span class="file-tree-annotation">— парсинг IDS</span>
+                    </div>
+                    <div class="file-tree-item" style="padding-left: 48px;">
+                        <span class="file-tree-icon">🏗️</span>
+                        <span class="file-tree-label">pset_generator.py</span>
+                        <span class="file-tree-annotation">— генерация IFC</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 2.3: Component chat -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Как компоненты «разговаривают» друг с другом</h2>
+                <p class="lead">Представьте, что каждый компонент — это сотрудник компании. Вот их диалог при загрузке файла:</p>
+
+                <div class="chat-window">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-message" data-msg="0" data-sender="user" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-5)">👤</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-5)">Пользователь</span>
+                                <p>Перетаскиваю файл <code>requirements.ids</code> в зону загрузки!</p>
+                            </div>
+                        </div>
+                        <div class="chat-message" data-msg="1" data-sender="ui" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-1)">UI</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-1)">UI (app.js)</span>
+                                <p>Принято! Читаю содержимое файла... Отправляю XML в Bridge.</p>
+                            </div>
+                        </div>
+                        <div class="chat-message" data-msg="2" data-sender="bridge" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-2)">Bridge</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-2)">Pyodide Bridge</span>
+                                <p>Python уже загружен! Записываю XML в виртуальную файловую систему... Запускаю <code>ids_parser.py</code>.</p>
+                            </div>
+                        </div>
+                        <div class="chat-message" data-msg="3" data-sender="parser" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-3)">Parser</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-3)">IDS Parser</span>
+                                <p>Нашёл 5 шаблонов свойств (PSet): МОГЭ_КСИ, МОГЭ_Информация, МОГЭ_Геометрические параметры... Проверяю сущности — все валидны. Возвращаю JSON.</p>
+                            </div>
+                        </div>
+                        <div class="chat-message" data-msg="4" data-sender="bridge" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-2)">Bridge</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-2)">Pyodide Bridge</span>
+                                <p>JSON передан обратно в JavaScript. UI может показывать PSet!</p>
+                            </div>
+                        </div>
+                        <div class="chat-message" data-msg="5" data-sender="ui" style="display:none">
+                            <div class="chat-avatar" style="background: var(--color-actor-1)">UI</div>
+                            <div class="chat-bubble">
+                                <span class="chat-sender" style="color: var(--color-actor-1)">UI (app.js)</span>
+                                <p>Отображаю 5 колонок с PSet. Кнопка «Сгенерировать IFC» стала активной. Жду нажатия!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-typing" id="chat-typing" style="display:none">
+                        <div class="chat-avatar" id="typing-avatar">?</div>
+                        <div class="chat-typing-dots">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+
+                    <div class="chat-controls">
+                        <button class="btn btn-accent" onclick="playChatNext()">Следующее сообщение</button>
+                        <button class="quiz-reset-btn" onclick="playChatAll()">▶ Все сразу</button>
+                        <button class="quiz-reset-btn" onclick="resetChat()">↺ Заново</button>
+                        <span class="chat-progress" id="chat-progress">0 / 6</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MODULE 3: HOW THE BRIDGE WORKS ==================== -->
+<section class="module" id="module-3" style="background: var(--color-bg-warm)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">03</span>
+            <h1 class="module-title">Как мост соединяет два мира</h1>
+            <p class="module-subtitle">Pyodide: Python в браузере через WebAssembly</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 3.1: The metaphor -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Мост через реку</h2>
+                <p class="lead">
+                    Представьте два города, разделённых рекой. Один — <strong>JavaScript</strong> (язык браузера), другой — <strong>Python</strong> (язык для обработки IFC). Между ними нужен мост.
+                </p>
+                <p>
+                    <strong>Pyodide Bridge</strong> — это этот мост. Он позволяет JavaScript-коду вызывать Python-функции и получать результаты обратно. Но мост не бесплатный: нужно сначала его построить (загрузить Pyodide), и перевозка грузов занимает время.
+                </p>
+
+                <div class="callout callout-accent animate-in">
+                    <div class="callout-icon">🌉</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Почему Python в браузере?</strong>
+                        <p>Библиотека <span class="term" data-def="IfcOpenShell — open-source библиотека для работы с IFC-файлами. Написана на C++ с Python-обёрткой. Позволяет создавать, читать и валидировать IFC-файлы.">IfcOpenShell</span>, которая создаёт IFC-файлы, доступна только на Python. Поэтому весь Python-стек приходится запускать в браузере через Pyodide.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3.2: Loading process -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что загружается при первом визите</h2>
+
+                <div class="step-cards stagger-children">
+                    <div class="step-card animate-in">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <h4>Pyodide (~30 МБ)</h4>
+                            <p>Python 3.13, скомпилированный в WebAssembly. Загружается с CDN при первом открытии.</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <h4>micropip</h4>
+                            <p>Менеджер пакетов Python для браузера. Позволяет устанавливать Python-библиотеки.</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <h4>ifcopenshell (wheel)</h4>
+                            <p>Специально скомпилированная версия IfcOpenShell для Pyodide. ~15 МБ.</p>
+                        </div>
+                    </div>
+                    <div class="step-card animate-in">
+                        <div class="step-num">4</div>
+                        <div class="step-content">
+                            <h4>Python-модули (src/)</h4>
+                            <p>ids_parser.py, pset_generator.py — копируются в виртуальную файловую систему Pyodide.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3.3: Code translation -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Как Bridge загружает Python-модули</h2>
+
+                <div class="translation-block">
+                    <div class="translation-code">
+                        <span class="translation-label">CODE (pyodide-bridge.js)</span>
+                        <pre><code><span class="code-keyword">async</span> <span class="code-function">loadModules</span>(needIFCOpenShell) {</span>
+<span class="code-line">  <span class="code-keyword">await</span> <span class="code-keyword">this</span>.<span class="code-function">init</span>();</span>
+<span class="code-line">  <span class="code-keyword">await</span> <span class="code-keyword">this</span>.pyodide.<span class="code-function">loadPackage</span>(<span class="code-string">'micropip'</span>);</span>
+<span class="code-line">  <span class="code-keyword">const</span> micropip = <span class="code-keyword">this</span>.pyodide.<span class="code-function">pyimport</span>(<span class="code-string">'micropip'</span>);</span>
+<span class="code-line">  <span class="code-keyword">if</span> (needIFCOpenShell) {</span>
+<span class="code-line">    <span class="code-keyword">const</span> wheelUrl = <span class="code-string">'https://...'</span>;</span>
+<span class="code-line">    <span class="code-keyword">await</span> micropip.<span class="code-function">install</span>(wheelUrl);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">'src/ids_parser.py'</span>);</span>
+<span class="code-line">  <span class="code-keyword">const</span> content = <span class="code-keyword">await</span> response.<span class="code-function">text</span>();</span>
+<span class="code-line">  <span class="code-keyword">this</span>.pyodide.FS.<span class="code-function">writeFile</span>(</span>
+<span class="code-line">    <span class="code-string">'/src/ids_parser.py'</span>, content</span>
+<span class="code-line">  );</span>
+<span class="code-line">}</span></code></pre>
+                    </div>
+                    <div class="translation-english">
+                        <span class="translation-label">PLAIN ENGLISH</span>
+                        <div class="translation-lines">
+                            <p class="tl">Инициализируем Pyodide (если ещё не загружен)...</p>
+                            <p class="tl">Загружаем пакет micropip — менеджер Python-пакетов...</p>
+                            <p class="tl">Импортируем micropip в Python-пространство...</p>
+                            <p class="tl">Если нужен ifcopenshell (для генерации IFC)...</p>
+                            <p class="tl">Берём URL wheel-файла с CDN...</p>
+                            <p class="tl">Устанавливаем пакет через micropip...</p>
+                            <p class="tl">Скачиваем ids_parser.py через fetch (обычный HTTP-запрос)...</p>
+                            <p class="tl">Получаем текст файла...</p>
+                            <p class="tl">Записываем в виртуальную файловую систему Pyodide...</p>
+                            <p class="tl">Теперь Python-код может импортировать ids_parser...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3.4: Data flow animation -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Данные туда и обратно</h2>
+                <p class="lead">Вот как XML-файл проходит путь от браузера до Python и обратно:</p>
+
+                <div class="flow-animation" id="flow-animation">
+                    <div class="flow-actors" style="display: flex; justify-content: space-around; margin: var(--space-8) 0;">
+                        <div class="flow-actor" id="flow-user" style="text-align: center; padding: var(--space-6); background: var(--color-surface); border-radius: var(--radius-md); border: 1px solid var(--color-border); transition: all var(--duration-normal) var(--ease-out);">
+                            <div style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">👤</div>
+                            <strong>Браузер (JS)</strong>
+                        </div>
+                        <div class="flow-actor" id="flow-bridge" style="text-align: center; padding: var(--space-6); background: var(--color-surface); border-radius: var(--radius-md); border: 1px solid var(--color-border); transition: all var(--duration-normal) var(--ease-out);">
+                            <div style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">🌉</div>
+                            <strong>Bridge</strong>
+                        </div>
+                        <div class="flow-actor" id="flow-python" style="text-align: center; padding: var(--space-6); background: var(--color-surface); border-radius: var(--radius-md); border: 1px solid var(--color-border); transition: all var(--duration-normal) var(--ease-out);">
+                            <div style="font-size: var(--text-3xl); margin-bottom: var(--space-2);">🐍</div>
+                            <strong>Python (Pyodide)</strong>
+                        </div>
+                    </div>
+
+                    <div id="flow-packet" style="text-align: center; padding: var(--space-3); background: var(--color-accent); color: white; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; width: fit-content; margin: 0 auto; opacity: 0; transition: all 0.5s var(--ease-out);">
+                        XML данные
+                    </div>
+
+                    <div id="flow-label" style="text-align: center; margin: var(--space-6) 0; font-size: var(--text-sm); color: var(--color-text-secondary); min-height: 48px; display: flex; align-items: center; justify-content: center;">
+                        Нажмите «Следующий шаг» чтобы начать
+                    </div>
+
+                    <div class="flow-controls" style="text-align: center;">
+                        <button class="btn btn-accent" onclick="flowNext()">Следующий шаг</button>
+                        <button class="quiz-reset-btn" onclick="flowReset()">↺ Заново</button>
+                        <span class="chat-progress" id="flow-progress">Шаг 0 / 5</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MODULE 4: PARSING IDS ==================== -->
+<section class="module" id="module-4" style="background: var(--color-bg)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">04</span>
+            <h1 class="module-title">Чтение спецификаций</h1>
+            <p class="module-subtitle">Как IDS Parser извлекает данные из XML</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 4.1: What is an IDS file -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что внутри IDS-файла?</h2>
+                <p class="lead">
+                    IDS-файл — это XML-документ со структурой <span class="term" data-def="XML (eXtensible Markup Language) — текстовый формат для хранения структурированных данных. Похож на HTML, но с произвольными тегами. Широко используется для обмена данными между системами.">XML</span>. Он содержит «спецификации» — правила, которым должна соответствовать BIM-модель.
+                </p>
+
+                <div class="code-block" style="position: relative;">
+                    <span class="code-label">XML (упрощённый пример)</span>
+                    <pre><code><span class="code-tag">&lt;ids:specification</span> <span class="code-attr">name</span>=<span class="code-value">"Требования к ПЗУ"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;ids:applicability&gt;</span>
+    <span class="code-tag">&lt;ids:entity&gt;</span>
+      <span class="code-tag">&lt;ids:name&gt;</span>
+        <span class="code-tag">&lt;xs:restriction</span> <span class="code-attr">base</span>=<span class="code-value">"xs:string"</span><span class="code-tag">&gt;</span>
+          <span class="code-tag">&lt;xs:pattern</span> <span class="code-attr">value</span>=<span class="code-value">"IFCSTAIRFLIGHT|IFCSLAB"</span><span class="code-tag">/&gt;</span>
+        <span class="code-tag">&lt;/xs:restriction&gt;</span>
+      <span class="code-tag">&lt;/ids:name&gt;</span>
+    <span class="code-tag">&lt;/ids:entity&gt;</span>
+  <span class="code-tag">&lt;/ids:applicability&gt;</span>
+
+  <span class="code-tag">&lt;ids:requirements&gt;</span>
+    <span class="code-tag">&lt;ids:property</span> <span class="code-attr">dataType</span>=<span class="code-value">"IFCTEXT"</span><span class="code-tag">&gt;</span>
+      <span class="code-tag">&lt;ids:propertySet&gt;</span>
+        <span class="code-tag">&lt;ids:simpleValue&gt;</span>МОГЭ_Информация<span class="code-tag">&lt;/ids:simpleValue&gt;</span>
+      <span class="code-tag">&lt;/ids:propertySet&gt;</span>
+      <span class="code-tag">&lt;ids:baseName&gt;</span>
+        <span class="code-tag">&lt;ids:simpleValue&gt;</span>Наименование<span class="code-tag">&lt;/ids:simpleValue&gt;</span>
+      <span class="code-tag">&lt;/ids:baseName&gt;</span>
+    <span class="code-tag">&lt;/ids:property&gt;</span>
+  <span class="code-tag">&lt;/ids:requirements&gt;</span>
+<span class="code-tag">&lt;/ids:specification&gt;</span></code></pre>
+                </div>
+
+                <div class="callout callout-info animate-in">
+                    <div class="callout-icon">📋</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Структура спецификации</strong>
+                        <p>Каждая <code>&lt;ids:specification&gt;</code> содержит две части: <strong>applicability</strong> (к каким элементам применяется) и <strong>requirements</strong> (какие свойства нужны). Parser читает обе части.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 4.2: Parsing code -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Как Parser читает XML</h2>
+
+                <div class="translation-block">
+                    <div class="translation-code">
+                        <span class="translation-label">CODE (ids_parser.py)</span>
+                        <pre><code><span class="code-keyword">def</span> <span class="code-function">parse_ids_file</span>(file_path):</span>
+<span class="code-line">    tree = ET.<span class="code-function">parse</span>(file_path)</span>
+<span class="code-line">    root = tree.<span class="code-function">getroot</span>()</span>
+<span class="code-line">    ns = {<span class="code-string">"ids"</span>: <span class="code-string">"http://standards...</span>"}</span>
+<span class="code-line">    xs_ns = {<span class="code-string">"xs"</span>: <span class="code-string">"http://www.w3.org...</span>"}</span>
+<span class="code-line">    psets = {}</span>
+<span class="code-line">    <span class="code-keyword">for</span> spec <span class="code-keyword">in</span> root.<span class="code-function">findall</span>(</span>
+<span class="code-line">        <span class="code-string">".//ids:specification"</span>, ns</span>
+<span class="code-line">    ):</span>
+<span class="code-line">        applicability = spec.<span class="code-function">find</span>(</span>
+<span class="code-line">            <span class="code-string">"ids:applicability"</span>, ns</span>
+<span class="code-line">        )</span>
+<span class="code-line">        entity = applicability.<span class="code-function">find</span>(</span>
+<span class="code-line">            <span class="code-string">"ids:entity"</span>, ns</span>
+<span class="code-line">        )</span>
+<span class="code-line">        <span class="code-comment"># Извлекаем сущности...</span></span></code></pre>
+                    </div>
+                    <div class="translation-english">
+                        <span class="translation-label">PLAIN ENGLISH</span>
+                        <div class="translation-lines">
+                            <p class="tl">Открываем XML-файл и получаем корневой элемент...</p>
+                            <p class="tl">Определяем пространства имён (namespaces) — это как «фамилии» для XML-тегов...</p>
+                            <p class="tl">IDs-namespace для тегов IDS...</p>
+                            <p class="tl">XML Schema namespace для xs:pattern и xs:enumeration...</p>
+                            <p class="tl">Словарь для хранения PSet (ключ = имя PSet)...</p>
+                            <p class="tl">Находим все спецификации в документе...</p>
+                            <p class="code-line">Для каждой спецификации...</p>
+                            <p class="code-line">Находим секцию applicability...</p>
+                            <p class="code-line">В ней находим элемент entity...</p>
+                            <p class="code-line">Далее извлекаем тип сущности (IFCWALL, IFCSLAB и т.д.)...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 4.3: Entity validation -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Проверка сущностей</h2>
+                <p class="lead">
+                    После извлечения сущностей Parser проверяет, существуют ли они в IFC4. Для этого используется список из ~120 валидных сущностей.
+                </p>
+
+                <div class="badge-list">
+                    <div class="badge-item">
+                        <code class="badge-code">IFCWALL</code>
+                        <span class="badge-desc">Стена — валидная сущность ✅</span>
+                    </div>
+                    <div class="badge-item">
+                        <code class="badge-code">IFCSLAB</code>
+                        <span class="badge-desc">Перекрытие — валидная сущность ✅</span>
+                    </div>
+                    <div class="badge-item">
+                        <code class="badge-code">IFCSTAIRFLIGHT</code>
+                        <span class="badge-desc">Марш лестницы — валидная сущность ✅</span>
+                    </div>
+                    <div class="badge-item">
+                        <code class="badge-code">IFCMAGICWALL</code>
+                        <span class="badge-desc">Не существует в IFC4 — будет предупреждение ⚠️</span>
+                    </div>
+                </div>
+
+                <div class="callout callout-warning animate-in">
+                    <div class="callout-icon">⚠️</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Предупреждение в UI</strong>
+                        <p>Если Parser находит несуществующую сущность, приложение показывает красное предупреждение в sidebar: «Сущности не найдены в IFC4: IFCMAGICWALL». Пользователь знает, что в IDS есть ошибка.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 4.4: Quiz -->
+            <section class="screen animate-in" id="quiz-module-4">
+                <h2 class="screen-heading">Проверьте понимание</h2>
+                <div class="quiz-container">
+                    <div class="quiz-question-block" data-question="q4-1" data-correct="option-b">
+                        <h3 class="quiz-question">Какой компонент читает XML-файл IDS?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Pyodide Bridge — он загружает Python</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>IDS Parser — Python-модуль ids_parser.py</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>UI (app.js) — он получает файл от пользователя</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q4-1-feedback"></div>
+                    </div>
+
+                    <div class="quiz-question-block" data-question="q4-2" data-correct="option-a">
+                        <h3 class="quiz-question">Что делает Parser, если находит несуществующую сущность IFC?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Добавляет предупреждение в PSet, но не останавливает парсинг</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Выдаёт ошибку и прекращает работу</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Игнорирует и продолжает без уведомления</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q4-2-feedback"></div>
+                    </div>
+
+                    <button class="quiz-check-btn" onclick="checkQuiz('quiz-module-4')">Проверить ответы</button>
+                    <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module-4')">Попробовать снова</button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MODULE 5: GENERATING IFC ==================== -->
+<section class="module" id="module-5" style="background: var(--color-bg-warm)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">05</span>
+            <h1 class="module-title">Рождение IFC-файла</h1>
+            <p class="module-subtitle">Как PSet Generator создаёт IFC4 через ifcopenshell</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 5.1: What is IFC -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что такое IFC-файл?</h2>
+                <p class="lead">
+                    IFC (Industry Foundation Classes) — это открытый формат для BIM-данных. Представьте его как «универсальный язык» для строительных программ: Revit, ArchiCAD, Tekla — все понимают IFC.
+                </p>
+                <p>
+                    Наш генератор создаёт <strong>IFC4</strong> — четвёртую версию стандарта. Внутри файл содержит <span class="term" data-def="IfcPropertySetTemplate — сущность IFC, описывающая шаблон набора свойств. Определяет, какие свойства (имя, тип данных, допустимые значения) могут быть добавлены к элементам определённого типа.">IfcPropertySetTemplate</span> — шаблоны наборов свойств.
+                </p>
+
+                <div class="callout callout-accent animate-in">
+                    <div class="callout-icon">🏗️</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Аналогия</strong>
+                        <p>IFC-файл — это как бланк анкеты. Он определяет, <em>какие поля</em> нужно заполнить (имя, дата рождения, адрес), но не содержит самих данных. BIM-моделист потом заполняет эти поля для каждого элемента здания.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 5.2: Generation code -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Как создаётся IFC-файл</h2>
+
+                <div class="translation-block">
+                    <div class="translation-code">
+                        <span class="translation-label">CODE (pset_generator.py)</span>
+                        <pre><code><span class="code-keyword">def</span> <span class="code-function">generate</span>(<span class="code-keyword">self</span>, psets):</span>
+<span class="code-line">    <span class="code-keyword">self</span>.<span class="code-function">create_library</span>(<span class="code-string">"IDS2PSET Library"</span>)</span>
+<span class="code-line">    <span class="code-keyword">for</span> name, pset_data <span class="code-keyword">in</span> psets.<span class="code-function">items</span>():</span>
+<span class="code-line">        properties = []</span>
+<span class="code-line">        <span class="code-keyword">for</span> prop <span class="code-keyword">in</span> pset_data[<span class="code-string">"properties"</span>]:</span>
+<span class="code-line">            <span class="code-keyword">if</span> prop.<span class="code-function">get</span>(<span class="code-string">"is_pattern"</span>):</span>
+<span class="code-line">                <span class="code-keyword">continue</span>  <span class="code-comment"># Пропускаем regex</span></span>
+<span class="code-line">            ifc_prop = <span class="code-function">IFCTemplateProperty</span>(</span>
+<span class="code-line">                name=prop[<span class="code-string">"name"</span>],</span>
+<span class="code-line">                data_type=prop[<span class="code-string">"data_type"</span>],</span>
+<span class="code-line">                enum_values=prop[<span class="code-string">"enum_values"</span>]</span>
+<span class="code-line">            )</span>
+<span class="code-line">            properties.<span class="code-function">append</span>(ifc_prop)</span>
+<span class="code-line">        template = <span class="code-function">IFCTemplate</span>(</span>
+<span class="code-line">            name=name,</span>
+<span class="code-line">            properties=properties,</span>
+<span class="code-line">            applicable_entities=pset_data[<span class="code-string">"entities"</span>]</span>
+<span class="code-line">        )</span>
+<span class="code-line">        <span class="code-keyword">self</span>.<span class="code-function">add_template</span>(template)</span>
+<span class="code-line">    <span class="code-keyword">return</span> <span class="code-keyword">self</span>.file.<span class="code-function">to_string</span>()</span></code></pre>
+                    </div>
+                    <div class="translation-english">
+                        <span class="translation-label">PLAIN ENGLISH</span>
+                        <div class="translation-lines">
+                            <p class="tl">Создаём новую библиотеку IFC с именем «IDS2PSET Library»...</p>
+                            <p class="tl">Для каждого PSet из входных данных...</p>
+                            <p class="tl">Создаём пустой список свойств...</p>
+                            <p class="tl">Проходим по каждому свойству PSet...</p>
+                            <p class="tl">Если имя свойства — это regex (шаблон)...</p>
+                            <p class="tl">Пропускаем — IFC не поддерживает regex...</p>
+                            <p class="tl">Создаём объект свойства с именем, типом данных...</p>
+                            <p class="tl">И списком допустимых значений (если есть)...</p>
+                            <p class="tl">Добавляем в список...</p>
+                            <p class="tl">Создаём шаблон PSet с именем и списком свойств...</p>
+                            <p class="tl">Указываем, к каким IFC-сущностям применяется...</p>
+                            <p class="tl">Добавляем шаблон в библиотеку...</p>
+                            <p class="tl">Возвращаем содержимое файла как строку...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 5.3: Regex filtering -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Почему некоторые свойства не попадают в IFC</h2>
+                <p class="lead">
+                    IDS-файл может содержать свойства с <span class="term" data-def="Регулярное выражение (regex) — шаблон для поиска текста. Например, '.*[Кк][Сс][Ии].*' найдёт любой текст, содержащий 'КСИ' в любом регистре.">регулярными выражениями</span> (regex). IFC-формат не поддерживает regex в определениях свойств, поэтому генератор их пропускает.
+                </p>
+
+                <div class="callout callout-warning animate-in">
+                    <div class="callout-icon">🚫</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Жёсткий regex (xs:pattern)</strong>
+                        <p>Если свойство определено через <code>&lt;xs:pattern&gt;</code> в IDS — оно <strong>не попадёт</strong> в IFC. Приложение покажет предупреждение: «N свойств описаны регулярными выражениями — не будут созданы».</p>
+                    </div>
+                </div>
+
+                <div class="callout callout-info animate-in">
+                    <div class="callout-icon">ℹ️</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Мягкий regex (simpleValue)</strong>
+                        <p>Если regex указан в <code>&lt;ids:simpleValue&gt;</code> (без xs:pattern) — свойство попадёт в IFC, но приложение предупредит: «Возможно, IDS некорректен». Это может быть ошибка в IDS-файле.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 5.4: Download -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Скачивание результата</h2>
+                <p class="lead">После генерации файл скачивается через обычный браузерный механизм:</p>
+
+                <div class="translation-block">
+                    <div class="translation-code">
+                        <span class="translation-label">CODE (app.js)</span>
+                        <pre><code><span class="code-function">downloadIFCForIDS</span>(idsName) {</span>
+<span class="code-line">  <span class="code-keyword">const</span> ifcContent = <span class="code-keyword">this</span>.ifcByIDS[idsName];</span>
+<span class="code-line">  <span class="code-keyword">const</span> baseName = idsName</span>
+<span class="code-line">    .<span class="code-function">replace</span>(<span class="code-string">'.ids'</span>, <span class="code-string">''</span>);</span>
+<span class="code-line">  <span class="code-keyword">const</span> fileName = baseName</span>
+<span class="code-line">    + <span class="code-string">'_PSet_Library.ifc'</span>;</span>
+<span class="code-line">  <span class="code-keyword">const</span> blob = <span class="code-keyword">new</span> <span class="code-function">Blob</span>(</span>
+<span class="code-line">    [ifcContent],</span>
+<span class="code-line">    { <span class="code-property">type</span>: <span class="code-string">'application/x-step'</span> }</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">const</span> a = document</span>
+<span class="code-line">    .<span class="code-function">createElement</span>(<span class="code-string">'a'</span>);</span>
+<span class="code-line">  a.href = URL.<span class="code-function">createObjectURL</span>(blob);</span>
+<span class="code-line">  a.download = fileName;</span>
+<span class="code-line">  a.<span class="code-function">click</span>();</span>
+<span class="code-line">}</span></code></pre>
+                    </div>
+                    <div class="translation-english">
+                        <span class="translation-label">PLAIN ENGLISH</span>
+                        <div class="translation-lines">
+                            <p class="tl">Берём сгенерированный IFC-контент...</p>
+                            <p class="tl">Убираем расширение .ids из имени файла...</p>
+                            <p class="tl">Формируем имя: «имя_PSet_Library.ifc»...</p>
+                            <p class="tl">Создаём Blob (бинарный объект) из строки IFC...</p>
+                            <p class="tl">Указываем MIME-тип для IFC-файла...</p>
+                            <p class="tl">Создаём невидимую ссылку &lt;a&gt;...</p>
+                            <p class="tl">Привязываем Blob к ссылке через createObjectURL...</p>
+                            <p class="tl">Устанавливаем имя файла для скачивания...</p>
+                            <p class="tl">«Кликаем» по ссылке — браузер начинает скачивание...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 5.5: Quiz -->
+            <section class="screen animate-in" id="quiz-module-5">
+                <h2 class="screen-heading">Проверьте понимание</h2>
+                <div class="quiz-container">
+                    <div class="quiz-question-block" data-question="q5-1" data-correct="option-b">
+                        <h3 class="quiz-question">Почему свойства с regex не попадают в IFC?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Потому что ifcopenshell не умеет работать с regex</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Потому что IFC-формат не поддерживает regex в определениях свойств</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Это ограничение Pyodide — Python в браузере</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q5-1-feedback"></div>
+                    </div>
+
+                    <div class="quiz-question-block" data-question="q5-2" data-correct="option-c">
+                        <h3 class="quiz-question">Какое расширение у сгенерированного файла?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>.ids — тот же, что у входного файла</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>.xml — потому что IFC это XML</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>.ifc — стандартный формат IFC</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q5-2-feedback"></div>
+                    </div>
+
+                    <button class="quiz-check-btn" onclick="checkQuiz('quiz-module-5')">Проверить ответы</button>
+                    <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module-5')">Попробовать снова</button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MODULE 6: DEBUGGING ==================== -->
+<section class="module" id="module-6" style="background: var(--color-bg)">
+    <div class="module-content">
+        <header class="module-header animate-in">
+            <span class="module-number">06</span>
+            <h1 class="module-title">Когда всё идёт не по плану</h1>
+            <p class="module-subtitle">Отладка, предупреждения и общая архитектура</p>
+        </header>
+
+        <div class="module-body">
+
+            <!-- Screen 6.1: Warning types -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Типы предупреждений</h2>
+                <p class="lead">Приложение показывает несколько типов предупреждений. Каждый — сигнал о потенциальной проблеме:</p>
+
+                <div class="icon-row">
+                    <div class="icon-row-item">
+                        <div class="icon-row-icon" style="background: var(--color-warning-light, #FEF3C7); color: #92400E;">⚠️</div>
+                        <div>
+                            <div class="icon-row-label">Regex-свойства (оранжевый)</div>
+                            <div class="icon-row-desc">Свойства с регулярными выражениями не попадут в IFC. Нормальное поведение.</div>
+                        </div>
+                    </div>
+                    <div class="icon-row-item">
+                        <div class="icon-row-icon" style="background: #FEF3C7; color: #92400E;">🔍</div>
+                        <div>
+                            <div class="icon-row-label">IDS некорректен (жёлтый)</div>
+                            <div class="icon-row-desc">Regex указан в simpleValue вместо xs:pattern. Возможно, ошибка в IDS-файле.</div>
+                        </div>
+                    </div>
+                    <div class="icon-row-item">
+                        <div class="icon-row-icon" style="background: var(--color-error-light); color: var(--color-error);">❌</div>
+                        <div>
+                            <div class="icon-row-label">Сущности не найдены (красный)</div>
+                            <div class="icon-row-desc">Тип сущности из IDS не существует в IFC4. Проверьте IDS-файл.</div>
+                        </div>
+                    </div>
+                    <div class="icon-row-item">
+                        <div class="icon-row-icon" style="background: var(--color-error-light); color: var(--color-error);">🚫</div>
+                        <div>
+                            <div class="icon-row-label">IFC не будет сгенерирован (красный)</div>
+                            <div class="icon-row-desc">Все PSet описаны regex — генерация невозможна.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 6.2: Debugging tips -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Что делать, если что-то не работает</h2>
+
+                <div class="callout callout-warning animate-in">
+                    <div class="callout-icon">🐛</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">«Ошибка парсинга» в логе</strong>
+                        <p>Проверьте, что файл действительно в формате IDS (XML). Откройте его в текстовом редакторе — должен быть тег <code>&lt;ids:specification&gt;</code>.</p>
+                    </div>
+                </div>
+
+                <div class="callout callout-info animate-in">
+                    <div class="callout-icon">⏳</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">«Генерация...» зависла</strong>
+                        <p>Pyodide загружает ~45 МБ при первом запуске. На медленном интернете это может занять 30-60 секунд. После загрузки — работает быстро.</p>
+                    </div>
+                </div>
+
+                <div class="callout callout-accent animate-in">
+                    <div class="callout-icon">📊</div>
+                    <div class="callout-content">
+                        <strong class="callout-title">Проверка через лог</strong>
+                        <p>Раздел «Сообщения» в sidebar показывает каждый шаг: загрузку, парсинг, генерацию. Если что-то пошло не так — ошибка будет там.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 6.3: Architecture overview -->
+            <section class="screen animate-in">
+                <h2 class="screen-heading">Общая картина</h2>
+                <p class="lead">Вот как все компоненты работают вместе:</p>
+
+                <div class="arch-diagram">
+                    <div class="arch-zone">
+                        <h4 class="arch-zone-label">Браузер</h4>
+                        <div class="arch-component" onclick="showArchDesc(this)" data-desc="Отвечает за интерфейс: зона загрузки, кнопки, колонки PSet. Обрабатывает drag-and-drop, клики, скачивание файлов.">
+                            <div class="arch-icon" style="background: var(--color-actor-1); color: white;">🖥️</div>
+                            <span>UI (app.js)</span>
+                        </div>
+                        <div class="arch-component" onclick="showArchDesc(this)" data-desc="Мост между JS и Python. Загружает Pyodide, ifcopenshell, Python-модули. Передаёт данные туда-обратно.">
+                            <div class="arch-icon" style="background: var(--color-actor-2); color: white;">🌉</div>
+                            <span>Pyodide Bridge</span>
+                        </div>
+                    </div>
+                    <div class="arch-zone">
+                        <h4 class="arch-zone-label">Python (в браузере)</h4>
+                        <div class="arch-component" onclick="showArchDesc(this)" data-desc="Читает XML IDS-файл, извлекает PSet и свойства, проверяет сущности на валидность, определяет regex-паттерны.">
+                            <div class="arch-icon" style="background: var(--color-actor-3); color: white;">📖</div>
+                            <span>IDS Parser</span>
+                        </div>
+                        <div class="arch-component" onclick="showArchDesc(this)" data-desc="Создаёт IFC4-файл через ifcopenshell. Пропускает regex-свойства, создаёт шаблоны свойств, объявляет их в библиотеке.">
+                            <div class="arch-icon" style="background: var(--color-actor-4); color: white;">🏗️</div>
+                            <span>PSet Generator</span>
+                        </div>
+                        <div class="arch-component" onclick="showArchDesc(this)" data-desc="Библиотека ifcopenshell — основной инструмент для создания и валидации IFC-файлов. Загружается как wheel-файл через micropip.">
+                            <div class="arch-icon" style="background: var(--color-actor-5); color: white;">📦</div>
+                            <span>IfcOpenShell</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arch-desc" id="arch-desc">Нажмите на компонент, чтобы узнать, что он делает</div>
+            </section>
+
+            <!-- Screen 6.4: Final quiz -->
+            <section class="screen animate-in" id="quiz-module-6">
+                <h2 class="screen-heading">Финальная проверка</h2>
+                <div class="quiz-container">
+                    <div class="quiz-question-block" data-question="q6-1" data-correct="option-b">
+                        <h3 class="quiz-question">Вы загрузили IDS-файл, но кнопка «Сгенерировать IFC» неактивна. В sidebar красное сообщение: «IFC не будет сгенерирован — все PSet описаны регулярными выражениями». Что делать?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Подождать — генерация ещё не началась</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Проверить IDS-файл — все свойства описаны regex, их нельзя конвертировать в IFC</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>Обновить страницу — это баг</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q6-1-feedback"></div>
+                    </div>
+
+                    <div class="quiz-question-block" data-question="q6-2" data-correct="option-a">
+                        <h3 class="quiz-question">Какой компонент отвечает за проверку, существуют ли сущности IFC (IFCWALL, IFCSLAB и т.д.)?</h3>
+                        <div class="quiz-options">
+                            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>IDS Parser — у него есть список валидных сущностей</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>PSet Generator — он создаёт IFC, значит проверяет</span>
+                            </button>
+                            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                                <div class="quiz-option-radio"></div>
+                                <span>IfcOpenShell — это его работа как IFC-библиотеки</span>
+                            </button>
+                        </div>
+                        <div class="quiz-feedback" id="q6-2-feedback"></div>
+                    </div>
+
+                    <button class="quiz-check-btn" onclick="checkQuiz('quiz-module-6')">Проверить ответы</button>
+                    <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module-6')">Попробовать снова</button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</section>
+
+<script>
+(function() {
+    'use strict';
+
+    // ========== NAVIGATION ==========
+    const modules = document.querySelectorAll('.module');
+    const navDotsContainer = document.getElementById('nav-dots');
+    const progressBar = document.getElementById('progress-bar');
+
+    // Create nav dots
+    modules.forEach((mod, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'nav-dot';
+        dot.dataset.target = mod.id;
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', `Модуль ${i + 1}`);
+        const tooltip = document.createElement('span');
+        tooltip.className = 'nav-dot-tooltip';
+        const title = mod.querySelector('.module-title');
+        tooltip.textContent = title ? title.textContent : `Модуль ${i + 1}`;
+        dot.appendChild(tooltip);
+        dot.addEventListener('click', () => {
+            mod.scrollIntoView({ behavior: 'smooth' });
+        });
+        navDotsContainer.appendChild(dot);
+    });
+
+    const navDots = navDotsContainer.querySelectorAll('.nav-dot');
+
+    // Update progress and dots
+    function updateNav() {
+        const scrollTop = window.scrollY;
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = (scrollTop / scrollHeight) * 100;
+        progressBar.style.width = progress + '%';
+
+        let currentIdx = 0;
+        modules.forEach((mod, i) => {
+            const rect = mod.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) currentIdx = i;
+        });
+
+        navDots.forEach((dot, i) => {
+            dot.classList.remove('current', 'visited');
+            if (i < currentIdx) dot.classList.add('visited');
+            if (i === currentIdx) dot.classList.add('current');
+        });
+    }
+
+    window.addEventListener('scroll', () => {
+        requestAnimationFrame(updateNav);
+    }, { passive: true });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+        let currentIdx = 0;
+        modules.forEach((mod, i) => {
+            const rect = mod.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) currentIdx = i;
+        });
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+            if (currentIdx < modules.length - 1) {
+                modules[currentIdx + 1].scrollIntoView({ behavior: 'smooth' });
+                e.preventDefault();
+            }
+        }
+        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+            if (currentIdx > 0) {
+                modules[currentIdx - 1].scrollIntoView({ behavior: 'smooth' });
+                e.preventDefault();
+            }
+        }
+    });
+
+    // ========== SCROLL ANIMATIONS ==========
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+
+    document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+    // Stagger children
+    document.querySelectorAll('.stagger-children').forEach(parent => {
+        Array.from(parent.children).forEach((child, i) => {
+            child.style.setProperty('--stagger-index', i);
+        });
+    });
+
+    // ========== CHAT ANIMATION ==========
+    let chatIndex = 0;
+    const chatMessages = document.querySelectorAll('#chat-messages .chat-message');
+    const chatActors = {
+        'user': { initials: '👤', color: 'var(--color-actor-5)' },
+        'ui': { initials: 'UI', color: 'var(--color-actor-1)' },
+        'bridge': { initials: '🌉', color: 'var(--color-actor-2)' },
+        'parser': { initials: '📖', color: 'var(--color-actor-3)' },
+    };
+
+    window.playChatNext = function() {
+        if (chatIndex >= chatMessages.length) return;
+        const msg = chatMessages[chatIndex];
+        const sender = msg.dataset.sender;
+        const typing = document.getElementById('chat-typing');
+        const avatar = document.getElementById('typing-avatar');
+        const actor = chatActors[sender] || { initials: '?', color: 'var(--color-text-muted)' };
+        avatar.textContent = actor.initials;
+        avatar.style.background = actor.color;
+        typing.style.display = 'flex';
+        setTimeout(() => {
+            typing.style.display = 'none';
+            msg.style.display = 'flex';
+            msg.style.animation = 'fadeSlideUp 0.3s var(--ease-out)';
+            chatIndex++;
+            document.getElementById('chat-progress').textContent = `${chatIndex} / ${chatMessages.length}`;
+        }, 800);
+    };
+
+    window.playChatAll = function() {
+        chatIndex = 0;
+        chatMessages.forEach(m => { m.style.display = 'none'; });
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i >= chatMessages.length) { clearInterval(interval); return; }
+            chatIndex = i;
+            const msg = chatMessages[i];
+            const sender = msg.dataset.sender;
+            const actor = chatActors[sender] || { initials: '?', color: 'var(--color-text-muted)' };
+            document.getElementById('typing-avatar').textContent = actor.initials;
+            document.getElementById('typing-avatar').style.background = actor.color;
+            document.getElementById('chat-typing').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('chat-typing').style.display = 'none';
+                msg.style.display = 'flex';
+                msg.style.animation = 'fadeSlideUp 0.3s var(--ease-out)';
+                i++;
+                chatIndex = i;
+                document.getElementById('chat-progress').textContent = `${chatIndex} / ${chatMessages.length}`;
+            }, 600);
+        }, 1200);
+    };
+
+    window.resetChat = function() {
+        chatIndex = 0;
+        chatMessages.forEach(m => { m.style.display = 'none'; });
+        document.getElementById('chat-progress').textContent = `0 / ${chatMessages.length}`;
+    };
+
+    // ========== FLOW ANIMATION ==========
+    const flowSteps = [
+        { from: 'flow-user', to: 'flow-bridge', label: '👤 Браузер: пользователь перетаскивает IDS-файл → JS читает содержимое', highlight: 'flow-user', packet: 'XML файл' },
+        { from: 'flow-bridge', to: 'flow-python', label: '🌉 Bridge: передаёт XML в виртуальную файловую систему Pyodide', highlight: 'flow-bridge', packet: 'XML → /tmp/input.ids' },
+        { from: 'flow-python', to: 'flow-python', label: '🐍 Python: ids_parser.py парсит XML, извлекает PSet и сущности', highlight: 'flow-python', packet: 'Обработка...' },
+        { from: 'flow-python', to: 'flow-bridge', label: '🐍 Python: возвращает JSON с распарсенными данными', highlight: 'flow-python', packet: 'JSON данные' },
+        { from: 'flow-bridge', to: 'flow-user', label: '🌉 Bridge → 👤 Браузер: UI отображает PSet в колонках', highlight: 'flow-user', packet: 'Готово!' },
+    ];
+
+    let flowStep = 0;
+    window.flowNext = function() {
+        if (flowStep >= flowSteps.length) return;
+        const step = flowSteps[flowStep];
+        document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+        const actorEl = document.getElementById(step.highlight);
+        if (actorEl) {
+            actorEl.classList.add('active');
+            actorEl.style.animation = 'pulseGlow 1s var(--ease-out)';
+            setTimeout(() => { actorEl.style.animation = ''; }, 1000);
+        }
+        const packet = document.getElementById('flow-packet');
+        packet.textContent = step.packet;
+        packet.style.opacity = '1';
+        packet.style.transform = 'scale(1.1)';
+        setTimeout(() => { packet.style.transform = 'scale(1)'; }, 300);
+        document.getElementById('flow-label').textContent = step.label;
+        flowStep++;
+        document.getElementById('flow-progress').textContent = `Шаг ${flowStep} / ${flowSteps.length}`;
+    };
+
+    window.flowReset = function() {
+        flowStep = 0;
+        document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+        document.getElementById('flow-packet').style.opacity = '0';
+        document.getElementById('flow-label').textContent = 'Нажмите «Следующий шаг» чтобы начать';
+        document.getElementById('flow-progress').textContent = 'Шаг 0 / ' + flowSteps.length;
+    };
+
+    // ========== QUIZ ==========
+    const quizExplanations = {
+        'q4-1': {
+            true: 'Верно! IDS Parser (ids_parser.py) — это Python-модуль, который читает XML и извлекает данные. Bridge только передаёт данные, а UI только отображает.',
+            false: 'Не совсем. Pyodide Bridge загружает Python-среду, но не читает XML. UI получает файл от пользователя, но передаёт его в Bridge. Чтение XML — задача Parser.'
+        },
+        'q4-2': {
+            true: 'Верно! Parser добавляет предупреждение (entity_warning или invalid_entities), но продолжает работу. Пользователь видит предупреждение в интерфейсе.',
+            false: 'Нет. Parser не останавливается при ошибке — он добавляет предупреждение и продолжает. Игнорировать тоже не вариант — пользователь должен знать о проблеме.'
+        },
+        'q5-1': {
+            true: 'Верно! IFC-формат (стандарт ISO 16739) не поддерживает регулярные выражения в определениях свойств. Это ограничение стандарта, а не библиотеки.',
+            false: 'Нет. IfcOpenShell отлично работает с regex — проблема в стандарте IFC, который их не поддерживает.'
+        },
+        'q5-2': {
+            true: 'Верно! .ifc — стандартное расширение для IFC-файлов. Приложение формирует имя как «имя_файла_PSet_Library.ifc».',
+            false: 'Нет. .ids — это входной формат (спецификация). .xml — технически IFC может быть в XML, но стандартное расширение — .ifc.'
+        },
+        'q6-1': {
+            true: 'Верно! Если все PSet описаны regex, их невозможно конвертировать в IFC. Нужно проверить и исправить IDS-файл.',
+            false: 'Нет. Это не баг и не ожидание — это осознанное ограничение. Regex нельзя представить в IFC-формате.'
+        },
+        'q6-2': {
+            true: 'Верно! IDS Parser содержит список ~120 валидных IFC4 сущностей (_VALID_IFC_ENTITIES) и проверяет каждую извлечённую сущность.',
+            false: 'Нет. PSet Generator создаёт IFC, но не проверяет сущности. IfcOpenShell тоже не делает такую проверку — это задача Parser.'
+        }
+    };
+
+    window.selectOption = function(btn) {
+        const block = btn.closest('.quiz-question-block');
+        block.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        btn.classList.add('selected');
+    };
+
+    function getExplanation(q, isCorrect) {
+        const qId = q.dataset.question;
+        const exp = quizExplanations[qId];
+        return isCorrect ? exp.true : exp.false;
+    }
+
+    window.checkQuiz = function(sectionId) {
+        const container = document.querySelector(`#${sectionId} .quiz-container`);
+        if (!container) return;
+        const questions = container.querySelectorAll('.quiz-question-block');
+        questions.forEach(q => {
+            const selected = q.querySelector('.quiz-option.selected');
+            const feedback = q.querySelector('.quiz-feedback');
+            const correctValue = q.dataset.correct;
+            if (!selected) {
+                feedback.textContent = 'Выберите ответ!';
+                feedback.className = 'quiz-feedback show warning';
+                return;
+            }
+            if (selected.dataset.value === correctValue) {
+                selected.classList.add('correct');
+                feedback.innerHTML = '<strong>Верно!</strong> ' + getExplanation(q, true);
+                feedback.className = 'quiz-feedback show success';
+            } else {
+                selected.classList.add('incorrect');
+                q.querySelector(`[data-value="${correctValue}"]`).classList.add('correct');
+                feedback.innerHTML = '<strong>Не совсем.</strong> ' + getExplanation(q, false);
+                feedback.className = 'quiz-feedback show error';
+            }
+            q.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
+        });
+    };
+
+    window.resetQuiz = function(sectionId) {
+        const container = document.querySelector(`#${sectionId} .quiz-container`);
+        if (!container) return;
+        container.querySelectorAll('.quiz-option').forEach(o => {
+            o.classList.remove('selected', 'correct', 'incorrect');
+            o.disabled = false;
+        });
+        container.querySelectorAll('.quiz-feedback').forEach(f => {
+            f.textContent = '';
+            f.className = 'quiz-feedback';
+        });
+    };
+
+    // ========== ARCH DIAGRAM ==========
+    window.showArchDesc = function(el) {
+        document.querySelectorAll('.arch-component').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('arch-desc').textContent = el.dataset.desc;
+    };
+
+    // ========== GLOSSARY TOOLTIPS ==========
+    const tooltipBubble = document.getElementById('tooltip-bubble');
+    let activeTerm = null;
+
+    document.querySelectorAll('.term').forEach(term => {
+        term.addEventListener('mouseenter', (e) => showTooltip(e, term));
+        term.addEventListener('mouseleave', hideTooltip);
+        term.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeTerm === term) {
+                hideTooltip();
+            } else {
+                showTooltip(e, term);
+            }
+        });
+    });
+
+    function showTooltip(e, term) {
+        const def = term.dataset.def;
+        if (!def) return;
+        activeTerm = term;
+        tooltipBubble.textContent = def;
+        tooltipBubble.classList.add('show');
+        term.classList.add('active');
+        positionTooltip(term);
+    }
+
+    function hideTooltip() {
+        tooltipBubble.classList.remove('show');
+        if (activeTerm) activeTerm.classList.remove('active');
+        activeTerm = null;
+    }
+
+    function positionTooltip(term) {
+        const rect = term.getBoundingClientRect();
+        const bubbleRect = tooltipBubble.getBoundingClientRect();
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        let top = rect.bottom + 8;
+        if (left < 10) left = 10;
+        if (left + bubbleRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - bubbleRect.width - 10;
+        }
+        if (top + bubbleRect.height > window.innerHeight) {
+            top = rect.top - bubbleRect.height - 8;
+        }
+        tooltipBubble.style.left = left + 'px';
+        tooltipBubble.style.top = top + 'px';
+    }
+
+    document.addEventListener('click', () => hideTooltip());
+    window.addEventListener('scroll', () => { if (activeTerm) positionTooltip(activeTerm); }, { passive: true });
+    window.addEventListener('resize', () => { if (activeTerm) positionTooltip(activeTerm); });
+
+    // Init
+    updateNav();
+})();
+</script>
+
+</body>
+</html>
