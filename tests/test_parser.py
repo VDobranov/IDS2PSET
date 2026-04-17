@@ -3,6 +3,7 @@
 import os
 import sys
 import pytest
+import xml.etree.ElementTree as ET
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -677,6 +678,245 @@ class TestParseIdsContentWithEntityInRequirements:
         result = parse_ids_content(content)
         assert "BeamPSet" in result
         assert "IFCBEAM" in result["BeamPSet"].applicable_entities
+
+
+class TestEdgeCases:
+    """Tests for edge cases and boundary conditions."""
+
+    def test_xs_pattern_not_split_entity(self):
+        """Test xs:pattern without | is handled as regex pattern."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity>
+        <name>
+          <xs:restriction base="xs:string">
+            <xs:pattern value=".*wall.*"/>
+          </xs:restriction>
+        </name>
+      </entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        assert ".*wall.*" in result["TestPSet"].applicable_entities
+        assert ".*wall.*" in result["TestPSet"].invalid_entities
+
+    def test_property_with_no_data_type(self):
+        """Test property without dataType uses default IFCTEXT."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property>
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        prop = result["TestPSet"].properties[0]
+        assert prop.data_type == "IFCTEXT"
+
+    def test_cardinality_defaults(self):
+        """Test cardinality defaults to optional when not specified."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property>
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        prop = result["TestPSet"].properties[0]
+        assert prop.cardinality == "optional"
+
+    def test_cardinality_required(self):
+        """Test explicit required cardinality."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property cardinality="required">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        prop = result["TestPSet"].properties[0]
+        assert prop.cardinality == "required"
+
+    def test_invalid_xml_structure(self):
+        """Test parsing handles malformed XML gracefully."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+      <broken>
+    </requirements>
+  </specification>
+</ids>"""
+        try:
+            result = parse_ids_content(content)
+            assert isinstance(result, dict)
+        except ET.ParseError:
+            pass
+
+    def test_multiple_properties_same_pset(self):
+        """Test multiple properties in same PSet are collected."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>Prop1</simpleValue></baseName>
+      </property>
+      <property dataType="IFCREAL">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>Prop2</simpleValue></baseName>
+      </property>
+      <property dataType="IFCINTEGER">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>Prop3</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        assert len(result["TestPSet"].properties) == 3
+        names = [p.name for p in result["TestPSet"].properties]
+        assert "Prop1" in names
+        assert "Prop2" in names
+        assert "Prop3" in names
+
+    def test_specification_without_name(self):
+        """Test specification without name attribute."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification>
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+
+    def test_pset_name_with_spaces(self):
+        """Test PSet name with spaces is handled correctly."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>Test PSet Name</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "Test PSet Name" in result
+
+    def test_property_description_empty(self):
+        """Test property with empty instructions."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity><name><simpleValue>IFCWALL</simpleValue></name></entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT" instructions="">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        prop = result["TestPSet"].properties[0]
+        assert prop.description == ""
+
+    def test_entity_with_multiple_predefined_types(self):
+        """Test entity with multiple predefined types via enumeration."""
+        content = """<?xml version="1.0" encoding="utf-8"?>
+<ids xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns="http://standards.buildingsmart.org/IDS">
+  <specification name="Test">
+    <applicability>
+      <entity>
+        <name><simpleValue>IFCSTAIR</simpleValue></name>
+        <predefinedType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="STRAIGHT"/>
+            <xs:enumeration value="CURVED"/>
+            <xs:enumeration value="SPIRAL"/>
+          </xs:restriction>
+        </predefinedType>
+      </entity>
+    </applicability>
+    <requirements>
+      <property dataType="IFCTEXT">
+        <propertySet><simpleValue>TestPSet</simpleValue></propertySet>
+        <baseName><simpleValue>TestProp</simpleValue></baseName>
+      </property>
+    </requirements>
+  </specification>
+</ids>"""
+        result = parse_ids_content(content)
+        assert "TestPSet" in result
+        entities = result["TestPSet"].applicable_entities
+        assert "IFCSTAIR/STRAIGHT" in entities
+        assert "IFCSTAIR/CURVED" in entities
+        assert "IFCSTAIR/SPIRAL" in entities
 
 
 if __name__ == "__main__":

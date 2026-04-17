@@ -1,156 +1,20 @@
 """IDS Parser module for extracting PSet requirements."""
 
-import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Set
+from typing import Dict, List
 from dataclasses import dataclass, field
 
-# Валидные IFC4 сущности (основные, используемые в IDS)
-_VALID_IFC_ENTITIES: Set[str] = {
-    "IFCPROJECT",
-    "IFCSITE",
-    "IFCBUILDING",
-    "IFCBUILDINGSTOREY",
-    "IFCSPATIALZONE",
-    "IFCSPATIALELEMENT",
-    "IFCSPATIALSTRUCTUREELEMENT",
-    "IFCELEMENT",
-    "IFCBUILDINGELEMENT",
-    "IFCBUILDINGELEMENTPROXY",
-    "IFCWALL",
-    "IFCWALLSTANDARDCASE",
-    "IFCSLAB",
-    "IFCCOLUMN",
-    "IFCBEAM",
-    "IFCDOOR",
-    "IFCWINDOW",
-    "IFCROOF",
-    "IFCSTAIR",
-    "IFCSTAIRFLIGHT",
-    "IFCRAMP",
-    "IFCRAMPFLIGHT",
-    "IFCCOVERING",
-    "IFCPLATE",
-    "IFCMEMBER",
-    "IFCPILE",
-    "IFCFOOTING",
-    "IFCCHIMNEY",
-    "IFCCURTAINWALL",
-    "IFCSHADINGDEVICE",
-    "IFCELEMENTASSEMBLY",
-    "IFCRAILING",
-    "IFCDISTRIBUTIONELEMENT",
-    "IFCDISTRIBUTIONFLOWELEMENT",
-    "IFCFLOWSEGMENT",
-    "IFCFLOWCONTROLLER",
-    "IFCFLOWFITTING",
-    "IFCFLOWTERMINAL",
-    "IFCFLOWSTORAGEDEVICE",
-    "IFCFLOWTREATMENTDEVICE",
-    "IFCFLOWMOVINGDEVICE",
-    "IFCFLOWTERMINALELEMENT",
-    "IFCAIRTERMINAL",
-    "IFCAIRTOAIRHEATRECOVERY",
-    "IFCAUDIOVISUALAPPLIANCE",
-    "IFCBOILER",
-    "IFCBUILDINGELEMENTPART",
-    "IFCBURNER",
-    "IFCCABLECARRIERFITTING",
-    "IFCCABLECARRIERSEGMENT",
-    "IFCCABLEFITTING",
-    "IFCCABLESEGMENT",
-    "IFCCHILLER",
-    "IFCCOIL",
-    "IFCCOLUMNSTANDARDCASE",
-    "IFCCOMMUNICATIONSAPPLIANCE",
-    "IFCCONDENSER",
-    "IFCCONTROLLER",
-    "IFCCOOLEDBEAM",
-    "IFCCOOLINGTOWER",
-    "IFCCOVERINGSTANDARDCASE",
-    "IFCDAMPER",
-    "IFCDISTRIBUTIONCHAMBERELEMENT",
-    "IFCDUCTFITTING",
-    "IFCDUCTSEGMENT",
-    "IFCELECTRICAPPLIANCE",
-    "IFCELECTRICDISTRIBUTIONBOARD",
-    "IFCELECTRICFLOWSTORAGEDEVICE",
-    "IFCELECTRICGENERATOR",
-    "IFCELECTRICMOTOR",
-    "IFCEVAPORATIVECOOLER",
-    "IFCEVAPORATOR",
-    "IFCFAN",
-    "IFCFILTERTYPE",
-    "IFCFIRESUPPRESSIONTERMINAL",
-    "IFCFLOWMETER",
-    "IFCINTERCEPTOR",
-    "IFCJUNCTIONBOX",
-    "IFCLAMP",
-    "IFCLIGHTFIXTURE",
-    "IFCMEDICALDEVICE",
-    "IFCOUTLET",
-    "IFCPIPEFITTING",
-    "IFCPIPESEGMENT",
-    "IFCPUMP",
-    "IFCRADIATOR",
-    "IFCRECTANGULARDUCTSEGMENT",
-    "IFCSANITARYTERMINAL",
-    "IFCSPACEHEATER",
-    "IFCSTACKTERMINAL",
-    "IFCSWITCHINGDEVICE",
-    "IFCTANK",
-    "IFCTRANSFORMER",
-    "IFCTUBEBUNDLE",
-    "IFCUNITARYCONTROLELEMENT",
-    "IFCUNITARYEQUIPMENT",
-    "IFCVALVE",
-    "IFCVIBRATIONISOLATOR",
-    "IFCWATERSTORE",
-    "IFCWINDGENERATOR",
-    "IFCBEAMSTANDARDCASE",
-    "IFCFURNISHINGELEMENT",
-    "IFCFURNITURE",
-    "IFCSYSTEMFURNITUREELEMENT",
-    "IFCANNOTATION",
-    "IFCGRID",
-    "IFCPORT",
-    "IFCOPENINGELEMENT",
-    "IFCOPENINGSTANDARDCASE",
-    "IFCPROJECTIONELEMENT",
-    "IFCVOIDINGFEATURE",
-    "IFCGEOGRAPHICELEMENT",
-    "IFCCIVILELEMENT",
-    "IFCTRANSPORTELEMENT",
-    "IFCVIBRATIONDAMPER",
-    "IFCEXTERNALSPATIALELEMENT",
-    "IFCEXTERNALSPATIALZONE",
-    "IFCSPACE",
-    "IFCZONE",
-    "IFCFLOWINSTRUMENT",
-}
+import entities
+from entities import validate_entities, is_regex_like
 
-# Regex-паттерны, указывающие на реальное регулярное выражение
-# Одиночные скобки/точки не считаем — они могут быть в обычных названиях
-_REGEX_PATTERNS = [
-    re.compile(r"\.\*"),  # .*
-    re.compile(r"\.\+"),  # .+
-    re.compile(r"\[\^?"),  # [ или [^
-    re.compile(r"\^"),  # ^
-    re.compile(r"\$"),  # $
-    re.compile(r"\{"),  # {
-    re.compile(r"\|"),  # |
-    re.compile(r"\\[dwsDWS]"),  # \d \w \s \D \W \S
-    re.compile(r"[^\s]\+"),  # X+ (квантификатор)
-    re.compile(r"[^\s]\?"),  # X? (квантификатор)
-    re.compile(r"\(\?"),  # (?: (?= и т.д.
-]
+# Re-export for backward compatibility
+_VALID_IFC_ENTITIES = entities._VALID_IFC_ENTITIES
+_REGEX_PATTERNS = entities._REGEX_PATTERNS
 
 
 def _is_regex_like(text):
     """Проверяет, содержит ли текст паттерны, характерные для regex."""
-    if not text:
-        return False
-    return any(p.search(text) for p in _REGEX_PATTERNS)
+    return is_regex_like(text)
 
 
 @dataclass
@@ -192,13 +56,7 @@ def _validate_entities(entities: List[str]) -> List[str]:
 
     Returns список невалидных сущностей.
     """
-    invalid = []
-    for entity in entities:
-        # Убираем часть с predefined type (IFCSTAIR/IFCSTAIRFLIGHT)
-        base_entity = entity.split("/")[0] if "/" in entity else entity
-        if base_entity not in _VALID_IFC_ENTITIES:
-            invalid.append(entity)
-    return invalid
+    return validate_entities(entities)
 
 
 def _extract_entity_names(elem, ns, xs_ns):

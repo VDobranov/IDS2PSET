@@ -191,10 +191,14 @@ class PSetGenerator:
         self.create_library("IDS2PSET Library")
 
         for name, pset_data in psets.items():
+            # Пропускаем PSet с жёстким regex (xs:pattern)
+            if pset_data.get("is_pattern"):
+                continue
+
             properties = []
             for prop in pset_data["properties"]:
                 prop_name = prop["name"]
-                # Пропускаем ТОЛЬКО жёсткий regex (xs:pattern)
+                # Пропускаем свойства с жёстким regex (xs:pattern)
                 if prop.get("is_pattern"):
                     continue
                 ifc_prop = IFCTemplateProperty(
