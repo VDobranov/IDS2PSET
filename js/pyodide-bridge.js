@@ -86,6 +86,14 @@ class PyodideBridge {
         if (!this.pythonModulesLoaded) {
             this.pyodide.FS.mkdir('/src');
 
+            // Загрузка entities.py (константы)
+            const entitiesUrl = new URL('src/entities.py', this.baseURL).href;
+            console.log('[PyodideBridge] Loading:', entitiesUrl);
+            const entitiesResponse = await fetch(entitiesUrl);
+            if (!entitiesResponse.ok) throw new Error(`Не удалось загрузить entities.py: ${entitiesResponse.status} ${entitiesResponse.statusText}`);
+            const entitiesContent = await entitiesResponse.text();
+            this.pyodide.FS.writeFile('/src/entities.py', entitiesContent);
+
             // Загрузка ids_parser.py
             const idsParserUrl = new URL('src/ids_parser.py', this.baseURL).href;
             console.log('[PyodideBridge] Loading:', idsParserUrl);
