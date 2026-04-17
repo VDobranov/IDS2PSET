@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 try:
-    from ids_parser import parse_ids_file
+    from ids_parser import parse_ids_file, parse_ids_content
     from pset_generator import PSetGenerator
     from validator import IFCValidator
     from gherkin_validator import GherkinValidator, GHERKIN_AVAILABLE
@@ -274,28 +274,26 @@ class TestE2EFullCycle:
 class TestE2EErrorHandling:
     """E2E tests for error handling."""
 
-    def test_invalid_ids_handling(self):
-        """Test handling of invalid IDS content."""
-        invalid_ids = """<?xml version="1.0"?>
+    def test_invalid_ids_raises_on_malformed_xml(self):
+        """Test that malformed XML raises ET.ParseError."""
+        import xml.etree.ElementTree as ET
+
+        malformed_ids = """<?xml version="1.0"?>
         <ids>
             <invalid_structure>
         </ids>"""
 
-        # Should not crash
-        import tempfile
+        with pytest.raises(ET.ParseError):
+            parse_ids_content(malformed_ids)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ids", delete=False) as f:
-            f.write(invalid_ids)
-            temp_path = f.name
+    def test_valid_ids_with_unknown_structure_returns_empty(self):
+        """Test that valid XML without IDS specifications returns empty dict."""
+        valid_xml_no_specs = """<?xml version="1.0"?>
+        <ids xmlns="http://standards.buildingsmart.org/IDS">
+        </ids>"""
 
-        try:
-            # May raise exception or return empty result
-            result = parse_ids_file(temp_path)
-            assert isinstance(result, dict)
-        except Exception:
-            pass  # Expected for invalid XML
-        finally:
-            os.unlink(temp_path)
+        result = parse_ids_content(valid_xml_no_specs)
+        assert result == {}
 
     def test_empty_pset_handling(self):
         """Test handling of empty PSet data."""

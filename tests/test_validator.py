@@ -30,19 +30,25 @@ class TestIFCValidator:
         assert self.validator.warnings == []
 
     def test_validate_requires_ifcopenshell(self):
-        """Test that validator raises error if ifcopenshell not available."""
-        # This test verifies the ImportError is raised correctly
-        import sys
+        """Test that IFCValidator raises ImportError when ifcopenshell is unavailable."""
+        import importlib.util
 
-        original_module = sys.modules.get("ifcopenshell")
-
-        # Temporarily remove ifcopenshell from modules
-        if "ifcopenshell" in sys.modules:
-            del sys.modules["ifcopenshell"]
-
-        # Restore original module
-        if original_module:
-            sys.modules["ifcopenshell"] = original_module
+        original_ifcopenshell = sys.modules.get("ifcopenshell")
+        try:
+            sys.modules["ifcopenshell"] = None  # type: ignore[assignment]
+            spec = importlib.util.spec_from_file_location(
+                "validator_no_ifc",
+                os.path.join(os.path.dirname(__file__), "..", "src", "validator.py"),
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)  # type: ignore[union-attr]
+            with pytest.raises(ImportError):
+                mod.IFCValidator()
+        finally:
+            if original_ifcopenshell is not None:
+                sys.modules["ifcopenshell"] = original_ifcopenshell
+            else:
+                sys.modules.pop("ifcopenshell", None)
 
     def test_validate_generated_ifc(self):
         """Test validation of generated IFC."""

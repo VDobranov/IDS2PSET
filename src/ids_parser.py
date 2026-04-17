@@ -313,32 +313,26 @@ def _extract_entity_with_type(entity_elem, ns, xs_ns):
     return result
 
 
-def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
+def _parse_ids_root(root) -> Dict[str, PSetGroup]:
     """
-    Parse IDS file and extract PSet requirements grouped by PSet name.
+    Parse IDS XML root element and extract PSet requirements grouped by PSet name.
     Supports both simpleValue and xs:restriction with xs:pattern.
     Combines PSet with same name but different entities.
 
     Args:
-        file_path: Path to the IDS XML file
+        root: XML root element (ET.Element)
 
     Returns:
         Dictionary mapping PSet names to PSetGroup objects
     """
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-
-    # Handle namespaces
     ns = {"ids": "http://standards.buildingsmart.org/IDS"}
     xs_ns = {"xs": "http://www.w3.org/2001/XMLSchema"}
 
     psets: Dict[str, PSetGroup] = {}
 
-    # Find all specifications
     specifications = root.findall(".//ids:specification", ns)
 
     for spec in specifications:
-        # Get entity from applicability with predefined type
         entities = []
         entity_warning = False
 
@@ -364,12 +358,10 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                     entity_warning = True
                 entities.extend(entity_values)
 
-        # Get requirements
         if requirements is None:
             continue
 
         for prop in requirements.findall("ids:property", ns):
-            # Extract property set name
             prop_set_elem = prop.find("ids:propertySet", ns)
             if prop_set_elem is None:
                 continue
@@ -379,10 +371,8 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 continue
 
             pset_name = pset_values[0]
-            # simple_value_pattern: имя PSet содержит regex-символы
             pset_has_simple_value_regex = _is_regex_like(pset_name)
 
-            # Extract base name
             base_name_elem = prop.find("ids:baseName", ns)
             if base_name_elem is None:
                 continue
@@ -392,15 +382,12 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 continue
 
             base_name = base_name_list[0]
-            # simple_value_pattern: имя свойства содержит regex-символы
             prop_has_simple_value_regex = _is_regex_like(base_name)
 
-            # Get attributes
             data_type = prop.get("dataType", "IFCTEXT")
             cardinality = prop.get("cardinality", "optional")
             instructions = prop.get("instructions", "")
 
-            # Get enum values if present
             enum_values = []
             value_elem = prop.find("ids:value", ns)
             if value_elem is not None:
@@ -412,7 +399,6 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                         if enum_val:
                             enum_values.append(enum_val)
 
-            # Create property requirement
             prop_req = PropertyRequirement(
                 name=base_name,
                 property_set=pset_name,
@@ -425,7 +411,6 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
                 simple_value_pattern=prop_has_simple_value_regex,
             )
 
-            # Group by PSet name
             if pset_name not in psets:
                 psets[pset_name] = PSetGroup(
                     name=pset_name,
@@ -436,21 +421,33 @@ def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
             elif entity_warning:
                 psets[pset_name].entity_warning = True
 
-            # Add property if not already present
             existing_names = [p.name for p in psets[pset_name].properties]
             if prop_req.name not in existing_names:
                 psets[pset_name].properties.append(prop_req)
 
-            # Add/merge entities and check validity
             for entity in entities:
                 if entity not in psets[pset_name].applicable_entities:
                     psets[pset_name].applicable_entities.append(entity)
 
-        # Validate entities for each PSet after all specifications processed
-        for pset in psets.values():
-            pset.invalid_entities = _validate_entities(pset.applicable_entities)
+    # Validate entities once after all specifications are processed
+    for pset in psets.values():
+        pset.invalid_entities = _validate_entities(pset.applicable_entities)
 
     return psets
+
+
+def parse_ids_file(file_path: str) -> Dict[str, PSetGroup]:
+    """
+    Parse IDS file and extract PSet requirements grouped by PSet name.
+
+    Args:
+        file_path: Path to the IDS XML file
+
+    Returns:
+        Dictionary mapping PSet names to PSetGroup objects
+    """
+    root = ET.parse(file_path).getroot()
+    return _parse_ids_root(root)
 
 
 def parse_ids_content(content: str) -> Dict[str, PSetGroup]:
@@ -463,18 +460,5 @@ def parse_ids_content(content: str) -> Dict[str, PSetGroup]:
     Returns:
         Dictionary mapping PSet names to PSetGroup objects
     """
-    import tempfile
-    import os
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".ids", delete=False, encoding="utf-8"
-    ) as f:
-        f.write(content)
-        temp_path = f.name
-
-    try:
-        result = parse_ids_file(temp_path)
-    finally:
-        os.unlink(temp_path)
-
-    return result
+    root = ET.fromstring(content)
+    return _parse_ids_root(root)
