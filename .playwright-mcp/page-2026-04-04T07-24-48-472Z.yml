@@ -1,9 +1,0 @@
-- generic [ref=e3]:
-  - generic [ref=e6]:
-    - heading "Страница недоступна" [level=1] [ref=e7]
-    - paragraph [ref=e8]:
-      - text: Сайт
-      - strong [ref=e9]: localhost
-      - text: не отправил данных.
-    - generic [ref=e10]: ERR_EMPTY_RESPONSE
-  - button "Перезагрузить" [ref=e13] [cursor=pointer]
